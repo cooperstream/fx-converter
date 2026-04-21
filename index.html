@@ -1486,7 +1486,10 @@
           available: false,
           installed: isRunningAsInstalledApp(),
           beforeInstallPromptSupported: 'onbeforeinstallprompt' in window,
-          iosSafari: isIosSafari()
+          iosSafari: isIosSafari(),
+          promptTimedOut: false,
+          promptTimeoutMs: 8000,
+          promptTimeoutId: null
         }
       };
 
@@ -1496,7 +1499,8 @@
         console.log('[PWA install] init', {
           installed: state.install.installed,
           beforeInstallPromptSupported: state.install.beforeInstallPromptSupported,
-          iosSafari: state.install.iosSafari
+          iosSafari: state.install.iosSafari,
+          promptTimeoutMs: state.install.promptTimeoutMs
         });
         bindStaticEvents();
         installSheetDrag(refs.baseSheet, document.getElementById('baseGrab'), closeBaseSheet);
@@ -1659,8 +1663,13 @@
         window.addEventListener('beforeinstallprompt', (event) => {
           console.log('[PWA install] beforeinstallprompt fired');
           event.preventDefault();
+          if (state.install.promptTimeoutId) {
+            clearTimeout(state.install.promptTimeoutId);
+            state.install.promptTimeoutId = null;
+          }
           state.install.deferredPrompt = event;
           state.install.available = !state.install.installed;
+          state.install.promptTimedOut = false;
           console.log('[PWA install] deferredPrompt set', {
             hasDeferredPrompt: Boolean(state.install.deferredPrompt),
             available: state.install.available,
@@ -1671,6 +1680,10 @@
 
         window.addEventListener('appinstalled', () => {
           console.log('[PWA install] appinstalled fired');
+          if (state.install.promptTimeoutId) {
+            clearTimeout(state.install.promptTimeoutId);
+            state.install.promptTimeoutId = null;
+          }
           state.install.installed = true;
           state.install.available = false;
           state.install.deferredPrompt = null;
@@ -1690,27 +1703,45 @@
             installed: state.install.installed
           });
           if (state.install.installed) {
+            if (state.install.promptTimeoutId) {
+              clearTimeout(state.install.promptTimeoutId);
+              state.install.promptTimeoutId = null;
+            }
             state.install.available = false;
             state.install.deferredPrompt = null;
           }
           syncInstallButton();
         });
+
+        startInstallPromptTimeout();
       }
 
       function syncInstallButton() {
         const hasDeferredPrompt = Boolean(state.install.deferredPrompt);
         const shouldShowInstallButton = state.install.available && !state.install.installed && hasDeferredPrompt;
         const shouldShowIosHint = !state.install.installed && !hasDeferredPrompt && state.install.iosSafari;
+        const isChromiumFallbackEligible = !state.install.iosSafari && state.install.beforeInstallPromptSupported;
+        const shouldShowChromiumFallbackHint = !state.install.installed
+          && !hasDeferredPrompt
+          && isChromiumFallbackEligible
+          && state.install.promptTimedOut;
         const shouldShowGenericHint = !state.install.installed
           && !hasDeferredPrompt
           && !state.install.beforeInstallPromptSupported
           && !state.install.iosSafari;
+        const hiddenReasons = [];
+        if (!hasDeferredPrompt) hiddenReasons.push('no-deferred-prompt');
+        if (state.install.installed) hiddenReasons.push('installed');
+        if (state.install.iosSafari) hiddenReasons.push('ios-safari');
+        if (!state.install.promptTimedOut) hiddenReasons.push('waiting-timeout');
 
         refs.installAppBtn.hidden = !shouldShowInstallButton;
-        refs.installHint.hidden = !(shouldShowIosHint || shouldShowGenericHint);
+        refs.installHint.hidden = !(shouldShowIosHint || shouldShowChromiumFallbackHint || shouldShowGenericHint);
 
         if (shouldShowIosHint) {
           refs.installHint.textContent = 'Щоб встановити додаток, відкрий Share і вибери Add to Home Screen.';
+        } else if (shouldShowChromiumFallbackHint) {
+          refs.installHint.textContent = 'Щоб встановити додаток, відкрий меню браузера (⋮) і вибери "Install app" / "Встановити застосунок".';
         } else if (shouldShowGenericHint) {
           refs.installHint.textContent = 'Встановлення з браузера недоступне на цьому пристрої.';
         } else {
@@ -1721,10 +1752,28 @@
           installed: state.install.installed,
           available: state.install.available,
           hasDeferredPrompt,
+          promptTimedOut: state.install.promptTimedOut,
           shouldShowInstallButton,
           shouldShowIosHint,
-          shouldShowGenericHint
+          shouldShowChromiumFallbackHint,
+          shouldShowGenericHint,
+          hiddenReasons
         });
+      }
+
+      function startInstallPromptTimeout() {
+        if (state.install.installed || state.install.deferredPrompt || state.install.iosSafari) return;
+        if (state.install.promptTimeoutId) clearTimeout(state.install.promptTimeoutId);
+        state.install.promptTimeoutId = window.setTimeout(() => {
+          if (state.install.installed || state.install.deferredPrompt) return;
+          state.install.promptTimedOut = true;
+          state.install.promptTimeoutId = null;
+          console.log('[PWA install] beforeinstallprompt timeout reached', {
+            promptTimedOut: state.install.promptTimedOut,
+            timeoutMs: state.install.promptTimeoutMs
+          });
+          syncInstallButton();
+        }, state.install.promptTimeoutMs);
       }
 
       async function onInstallButtonClick() {
