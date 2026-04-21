@@ -1316,7 +1316,7 @@
             <path d="M17.1 15C16.6 16.42 15.6 17.61 14.28 18.35C12.96 19.09 11.42 19.32 9.95 18.99C8.48 18.65 7.18 17.78 6.28 16.55L4 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
-        <button class="action-btn install-btn" id="installAppBtn" type="button">Встановити</button>
+        <button class="action-btn install-btn" id="installAppBtn" type="button" hidden>Встановити</button>
         <p class="install-hint" id="installHint" hidden></p>
         <button class="action-btn" id="openConverterBtn" type="button">Конвертер</button>
       </div>
@@ -1486,8 +1486,7 @@
           deferredPrompt: null,
           installed: isRunningAsInstalledApp(),
           beforeInstallPromptSupported: 'onbeforeinstallprompt' in window,
-          iosSafari: isIosSafari(),
-          chromium: isChromiumBrowser()
+          iosSafari: isIosSafari()
         }
       };
 
@@ -1497,8 +1496,7 @@
         console.log('[PWA install] init', {
           installed: state.install.installed,
           beforeInstallPromptSupported: state.install.beforeInstallPromptSupported,
-          iosSafari: state.install.iosSafari,
-          chromium: state.install.chromium
+          iosSafari: state.install.iosSafari
         });
         bindStaticEvents();
         installSheetDrag(refs.baseSheet, document.getElementById('baseGrab'), closeBaseSheet);
@@ -1696,64 +1694,63 @@
 
       function updateInstallUi() {
         const hasDeferredPrompt = Boolean(state.install.deferredPrompt);
-        const shouldShowInstallButton = !state.install.installed;
+        const shouldShowInstallButton = !state.install.installed && hasDeferredPrompt;
+        const shouldShowIosHint = !state.install.installed && !hasDeferredPrompt && state.install.iosSafari;
+        const shouldShowGenericHint = !state.install.installed
+          && !hasDeferredPrompt
+          && !state.install.beforeInstallPromptSupported
+          && !state.install.iosSafari;
 
         refs.installAppBtn.hidden = !shouldShowInstallButton;
-        refs.installHint.hidden = true;
-        refs.installHint.textContent = '';
+        refs.installHint.hidden = !(shouldShowIosHint || shouldShowGenericHint);
+
+        if (shouldShowIosHint) {
+          refs.installHint.textContent = 'Щоб встановити додаток, відкрий Share і вибери Add to Home Screen.';
+        } else if (shouldShowGenericHint) {
+          refs.installHint.textContent = 'Встановлення з браузера недоступне на цьому пристрої.';
+        } else {
+          refs.installHint.textContent = '';
+        }
 
         console.log(`[PWA install] install button ${shouldShowInstallButton ? 'shown' : 'hidden'}`);
         console.log('[PWA install] updateInstallUi', {
           installed: state.install.installed,
           hasDeferredPrompt,
           shouldShowInstallButton,
-          browserScenario: detectInstallScenario(hasDeferredPrompt)
+          shouldShowIosHint,
+          shouldShowGenericHint
         });
       }
 
       async function onInstallButtonClick() {
         const promptEvent = state.install.deferredPrompt;
-        const hasDeferredPrompt = Boolean(promptEvent);
-        const scenario = detectInstallScenario(hasDeferredPrompt);
         console.log('[PWA install] install button clicked', {
-          hasDeferredPrompt,
-          installed: state.install.installed,
-          browserScenario: scenario
+          hasDeferredPrompt: Boolean(promptEvent),
+          installed: state.install.installed
         });
 
-        if (state.install.installed) {
-          console.log('[PWA install] click ignored because app is already installed');
+        if (!promptEvent || state.install.installed) {
+          console.log('[PWA install] no deferredPrompt available on button click');
           return;
         }
 
-        if (hasDeferredPrompt) {
-          console.log('[PWA install] action on click: call deferredPrompt.prompt()');
-          promptEvent.prompt();
+        console.log('[PWA install] prompt() called');
+        promptEvent.prompt();
 
-          try {
-            const choiceResult = await promptEvent.userChoice;
-            console.log('[PWA install] userChoice result', choiceResult);
-            if (choiceResult?.outcome === 'accepted') {
-              state.install.installed = true;
-            }
-          } finally {
-            state.install.deferredPrompt = null;
-            console.log('[PWA install] deferredPrompt cleared after prompt', {
-              installed: state.install.installed,
-              hasDeferredPrompt: Boolean(state.install.deferredPrompt)
-            });
-            updateInstallUi();
+        try {
+          const choiceResult = await promptEvent.userChoice;
+          console.log('[PWA install] userChoice result', choiceResult);
+          if (choiceResult?.outcome === 'accepted') {
+            state.install.installed = true;
           }
-          return;
+        } finally {
+          state.install.deferredPrompt = null;
+          console.log('[PWA install] deferredPrompt cleared after prompt', {
+            installed: state.install.installed,
+            hasDeferredPrompt: Boolean(state.install.deferredPrompt)
+          });
+          updateInstallUi();
         }
-
-        const hintMessage = getInstallFallbackHint(scenario);
-        refs.installHint.textContent = hintMessage;
-        refs.installHint.hidden = false;
-        console.log('[PWA install] action on click: show fallback hint', {
-          browserScenario: scenario,
-          hintMessage
-        });
       }
 
       function isRunningAsInstalledApp() {
@@ -1770,32 +1767,6 @@
         const isFxiOS = /FxiOS/i.test(ua);
         const isEdgiOS = /EdgiOS/i.test(ua);
         return isIOS && isWebKit && !isCriOS && !isFxiOS && !isEdgiOS;
-      }
-
-      function isChromiumBrowser() {
-        const ua = window.navigator.userAgent || '';
-        const isChromiumFamily = /Chrome|Chromium|CriOS|Edg|OPR|Brave/i.test(ua);
-        const isFirefox = /Firefox|FxiOS/i.test(ua);
-        const isSafariOnly = /Safari/i.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Brave/i.test(ua);
-        return isChromiumFamily && !isFirefox && !isSafariOnly;
-      }
-
-      function detectInstallScenario(hasDeferredPrompt = Boolean(state.install.deferredPrompt)) {
-        if (state.install.installed) return 'installed_or_standalone';
-        if (hasDeferredPrompt) return 'chromium_with_prompt';
-        if (state.install.iosSafari) return 'ios_safari';
-        if (state.install.chromium) return 'chromium_without_prompt';
-        return 'generic_browser_without_custom_prompt';
-      }
-
-      function getInstallFallbackHint(scenario) {
-        if (scenario === 'ios_safari') {
-          return 'Щоб встановити додаток, відкрий Share і вибери Add to Home Screen.';
-        }
-        if (scenario === 'chromium_without_prompt') {
-          return 'Щоб встановити додаток, відкрий меню браузера і вибери Install page as app.';
-        }
-        return 'Щоб встановити додаток, відкрий меню браузера і знайди пункт встановлення (якщо доступно).';
       }
 
       async function loadCurrentRates(isManual = false) {
