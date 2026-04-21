@@ -1,0 +1,9 @@
+{
+  "name": "Курси та метали НБУ",
+  "short_name": "FX Converter",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#07111d",
+  "theme_color": "#08111f",
+  "icons": []
+}
