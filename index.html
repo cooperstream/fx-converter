@@ -1,0 +1,3039 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#08111f" />
+  <title>Курси та метали НБУ</title>
+  <style>
+    :root {
+      --bg: #07111d;
+      --shell: #0b1524;
+      --surface: rgba(16, 26, 43, 0.9);
+      --surface-2: #132037;
+      --surface-3: #0d1728;
+      --text: #edf4ff;
+      --muted: #9aabc1;
+      --muted-2: #7f93ad;
+      --line: rgba(154, 171, 193, 0.16);
+      --line-strong: rgba(154, 171, 193, 0.24);
+      --accent: #2fd47a;
+      --accent-soft: rgba(47, 212, 122, 0.12);
+      --accent-strong: #62f0a0;
+      --danger: #ff8b8b;
+      --danger-soft: rgba(255, 139, 139, 0.12);
+      --ink-shadow: 0 28px 80px rgba(0, 0, 0, 0.5);
+      --sheet-shadow: 0 -20px 48px rgba(0, 0, 0, 0.48);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 18px;
+      --radius-sm: 14px;
+      --tap: 48px;
+      --header-safe: max(16px, env(safe-area-inset-top));
+      --bottom-safe: max(16px, env(safe-area-inset-bottom));
+      --card-gap: 14px;
+      --transition: 220ms cubic-bezier(.2,.8,.24,1);
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top, rgba(47, 212, 122, 0.14), transparent 24%),
+        radial-gradient(circle at 100% 0%, rgba(76, 144, 255, 0.12), transparent 28%),
+        linear-gradient(180deg, #050c16 0%, #08111d 100%);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      background: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .app-shell {
+      position: relative;
+      width: min(100vw, 520px);
+      height: 100dvh;
+      background:
+        linear-gradient(180deg, rgba(11, 21, 36, 0.98), rgba(9, 18, 31, 0.98));
+      backdrop-filter: saturate(1.15) blur(16px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--ink-shadow);
+      border: 1px solid rgba(154, 171, 193, 0.08);
+    }
+
+    .app-header {
+      flex: 0 0 auto;
+      padding: calc(var(--header-safe) + 6px) 18px 12px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(180deg, rgba(14, 23, 39, 0.96), rgba(14, 23, 39, 0.88));
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(154, 171, 193, 0.12);
+      z-index: 3;
+    }
+
+    .brand-block {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .brand-kicker {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .mode-toggle {
+      width: fit-content;
+      max-width: 100%;
+      display: inline-grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      padding: 4px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(154, 171, 193, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+
+    .mode-btn {
+      min-width: 88px;
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 14px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      background: transparent;
+      border: 1px solid transparent;
+    }
+
+    .mode-btn.active {
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.05));
+      border-color: rgba(154, 171, 193, 0.16);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+    }
+
+    .header-meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+      min-height: 15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.01em;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+
+    .header-actions > .action-btn {
+      white-space: nowrap;
+    }
+
+    .icon-btn,
+    .action-btn,
+    .ghost-btn,
+    .chip,
+    .picker-row,
+    .list-row,
+    .period-chip,
+    .swap-btn,
+    .sheet-close,
+    .retry-btn,
+    .mini-btn {
+      transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease, opacity 140ms ease;
+    }
+
+    .icon-btn:active,
+    .action-btn:active,
+    .ghost-btn:active,
+    .chip:active,
+    .picker-row:active,
+    .list-row:active,
+    .period-chip:active,
+    .swap-btn:active,
+    .sheet-close:active,
+    .retry-btn:active,
+    .mini-btn:active,
+    .currency-card:active {
+      transform: scale(0.985);
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--line);
+      color: var(--text);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+    }
+
+    .action-btn {
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 15px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(154, 171, 193, 0.14);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+
+    .base-strip {
+      flex: 0 0 auto;
+      display: grid;
+      gap: 10px;
+      padding: 14px 18px 12px;
+      background: linear-gradient(180deg, rgba(11, 21, 36, 0.9), rgba(11, 21, 36, 0.7));
+      border-bottom: 1px solid rgba(154, 171, 193, 0.08);
+      z-index: 2;
+    }
+
+    .base-context {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .base-context strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .chips-row {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+
+    .chips-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip {
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .chip.active {
+      border-color: rgba(15, 143, 85, 0.34);
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      box-shadow: inset 0 0 0 1px rgba(15, 143, 85, 0.08);
+    }
+
+    .content-area {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      overscroll-behavior-y: contain;
+      padding: 16px 18px calc(var(--bottom-safe) + 18px);
+      scrollbar-width: none;
+    }
+
+    .content-area::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cards-list {
+      display: grid;
+      gap: var(--card-gap);
+      min-height: 100%;
+      align-content: start;
+    }
+
+    .currency-card {
+      width: 100%;
+      text-align: left;
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background:
+        linear-gradient(180deg, rgba(19, 32, 55, 0.96), rgba(15, 25, 43, 0.96));
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+      display: grid;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .currency-card::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: linear-gradient(180deg, rgba(47, 212, 122, 0.52), rgba(47, 212, 122, 0.1));
+      opacity: 0;
+      transition: opacity 160ms ease;
+    }
+
+    .currency-card::before,
+    .detail-summary::before,
+    .chart-card::before,
+    .input-card::before,
+    .result-card::before,
+    .section-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(47, 212, 122, 0.08), transparent 34%);
+      pointer-events: none;
+    }
+
+    .currency-card:hover::after,
+    .currency-card:focus-visible::after,
+    .currency-card:active::after {
+      opacity: 1;
+    }
+
+    .card-top,
+    .card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .card-code-group {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .card-code {
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .card-name {
+      font-size: 13px;
+      line-height: 1.25;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-chevron {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.04);
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .card-rate-block {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .card-rate {
+      font-size: clamp(28px, 7vw, 34px);
+      line-height: 0.95;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card-rate-caption {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.25;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .delta-stack {
+      display: grid;
+      justify-items: end;
+      gap: 8px;
+      flex: 0 0 auto;
+      text-align: right;
+    }
+
+    .delta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      white-space: nowrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .delta-pill.up {
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      border-color: rgba(15, 143, 85, 0.14);
+    }
+
+    .delta-pill.down {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-color: rgba(180, 35, 24, 0.12);
+    }
+
+    .delta-caption {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .state-card,
+    .empty-card,
+    .inline-state {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: linear-gradient(180deg, rgba(19, 32, 55, 0.94), rgba(14, 24, 42, 0.94));
+      padding: 18px;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+    }
+
+    .state-card h2,
+    .empty-card h2,
+    .inline-state h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+    }
+
+    .state-card p,
+    .empty-card p,
+    .inline-state p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .state-actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .retry-btn,
+    .mini-btn,
+    .ghost-btn {
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .ghost-btn {
+      background: var(--surface-3);
+    }
+
+    .skeleton-card {
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      display: grid;
+      gap: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .skeleton-card::after,
+    .skeleton-line::after,
+    .skeleton-chip::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+      animation: shimmer 1.45s infinite;
+    }
+
+    .skeleton-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .skeleton-line,
+    .skeleton-chip {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      background: rgba(148, 163, 184, 0.16);
+    }
+
+    .skeleton-line { height: 14px; }
+    .skeleton-chip { height: 38px; border-radius: 999px; }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition);
+    }
+
+    .overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 7, 15, 0.58);
+      backdrop-filter: blur(6px);
+    }
+
+    .sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, rgba(12, 20, 34, 0.99), rgba(9, 16, 29, 0.99));
+      border-radius: 26px 26px 0 0;
+      box-shadow: var(--sheet-shadow);
+      transform: translateY(calc(100% + 18px));
+      transition: transform 260ms cubic-bezier(.2,.84,.25,1), opacity var(--transition);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      will-change: transform;
+      max-height: 92dvh;
+    }
+
+    .overlay.open .sheet {
+      transform: translateY(0);
+    }
+
+    .sheet.is-dragging {
+      transition: none;
+    }
+
+    .sheet-medium {
+      height: min(88dvh, 760px);
+    }
+
+    .sheet-compact {
+      height: min(72dvh, 620px);
+    }
+
+    #converterSheet {
+      top: 0;
+      bottom: auto;
+      border-radius: 0 0 26px 26px;
+      transform: translateY(calc(-100% - 18px));
+      height: min(62dvh, 540px);
+      max-height: calc(100dvh - var(--top-safe) - 12px);
+    }
+
+    .overlay.open #converterSheet {
+      transform: translateY(0);
+    }
+
+    .sheet-header {
+      flex: 0 0 auto;
+      display: grid;
+      gap: 10px;
+      padding: 10px 18px 12px;
+      border-bottom: 1px solid rgba(154, 171, 193, 0.08);
+      background: linear-gradient(180deg, rgba(14, 23, 39, 0.98), rgba(14, 23, 39, 0.9));
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #converterSheet .sheet-header {
+      padding-top: calc(var(--top-safe) + 10px);
+    }
+
+    #detailSheet .sheet-header {
+      padding-top: 8px;
+      padding-bottom: 10px;
+    }
+
+    #detailSheet .sheet-scroll {
+      padding-top: 12px;
+      padding-bottom: calc(var(--bottom-safe) + 14px);
+    }
+
+    .sheet-grab {
+      width: 44px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(154, 171, 193, 0.26);
+      justify-self: center;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .sheet-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .sheet-title-group {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .sheet-title {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .sheet-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .sheet-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.05);
+      color: var(--muted);
+      font-size: 20px;
+      flex: 0 0 auto;
+    }
+
+    .sheet-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      padding: 16px 18px calc(var(--bottom-safe) + 18px);
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+    }
+
+    .sheet-scroll::-webkit-scrollbar { display: none; }
+
+    .list-section {
+      display: grid;
+      gap: 10px;
+    }
+
+    .search-field-wrap {
+      position: relative;
+    }
+
+    .search-field {
+      width: 100%;
+      min-height: 46px;
+      border-radius: 16px;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0 14px;
+      outline: none;
+      color: var(--text);
+    }
+
+    .search-field:focus {
+      border-color: rgba(15, 143, 85, 0.34);
+      box-shadow: 0 0 0 4px rgba(15, 143, 85, 0.08);
+      background: rgba(19, 32, 55, 0.96);
+    }
+
+    .list-row,
+    .picker-row {
+      min-height: 56px;
+      width: 100%;
+      border-radius: 18px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      text-align: left;
+      background: linear-gradient(180deg, rgba(19, 32, 55, 0.94), rgba(15, 25, 43, 0.94));
+      border: 1px solid rgba(154, 171, 193, 0.12);
+      box-shadow: 0 12px 22px rgba(0, 0, 0, 0.18);
+    }
+
+    .list-row.active,
+    .picker-row.active {
+      border-color: rgba(15, 143, 85, 0.3);
+      background: var(--accent-soft);
+    }
+
+    .row-main {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .row-code {
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: 15px;
+    }
+
+    .row-label {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .row-tag {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .detail-layout {
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-summary {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, rgba(19, 32, 55, 0.96), rgba(14, 24, 42, 0.96));
+      border: 1px solid rgba(154, 171, 193, 0.12);
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+    }
+
+    .detail-summary-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .detail-code-block {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .detail-code {
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+    }
+
+    .detail-name {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .detail-rate {
+      display: grid;
+      gap: 6px;
+    }
+
+    .detail-rate-value {
+      font-size: clamp(30px, 8vw, 38px);
+      line-height: 0.95;
+      font-weight: 900;
+      letter-spacing: -0.06em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .detail-rate-caption {
+      color: var(--muted);
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .period-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+
+    .period-row::-webkit-scrollbar { display: none; }
+
+    .period-chip {
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      font-weight: 700;
+      color: var(--text);
+      flex: 0 0 auto;
+    }
+
+    .period-chip.active {
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      border-color: rgba(15, 143, 85, 0.26);
+    }
+
+    .chart-card {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: linear-gradient(180deg, rgba(19, 32, 55, 0.96), rgba(14, 24, 42, 0.96));
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+    }
+
+    .chart-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    .chart-meta-value {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .chart-value-label {
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chart-secondary {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+      font-family: var(--font);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chart-area {
+      position: relative;
+      width: 100%;
+      min-height: 188px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(47, 212, 122, 0.10), rgba(6, 12, 22, 0.12));
+      overflow: hidden;
+    }
+
+    .chart-empty {
+      min-height: 188px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: 188px;
+      display: block;
+      overflow: visible;
+    }
+
+    .chart-grid {
+      stroke: rgba(154, 171, 193, 0.14);
+      stroke-width: 1;
+    }
+
+    .chart-path {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .chart-area-fill {
+      fill: url(#chartFill);
+    }
+
+    .chart-hit {
+      fill: transparent;
+      cursor: crosshair;
+    }
+
+    .chart-axis-label {
+      fill: var(--muted);
+      font-size: 10.5px;
+      font-family: var(--font);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.005em;
+    }
+
+    .chart-focus-line {
+      stroke: rgba(15, 143, 85, 0.42);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 5;
+    }
+
+    .chart-focus-dot {
+      fill: #0b1524;
+      stroke: var(--accent);
+      stroke-width: 3;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric-card {
+      min-width: 0;
+      padding: 12px 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      display: grid;
+      gap: 3px;
+      align-content: start;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 14px;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      font-weight: 800;
+      word-break: break-word;
+      text-align: center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-value.up { color: var(--accent-strong); }
+    .metric-value.down { color: var(--danger); }
+
+    .converter-layout {
+      display: grid;
+      gap: 16px;
+    }
+
+    .converter-main {
+      display: grid;
+      gap: 14px;
+    }
+
+    .input-card,
+    .result-card,
+    .section-card {
+      position: relative;
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, rgba(19, 32, 55, 0.96), rgba(14, 24, 42, 0.96));
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+    }
+
+    .input-label,
+    .section-label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .amount-input {
+      width: 100%;
+      border: 0;
+      padding: 0;
+      outline: none;
+      background: transparent;
+      font-size: clamp(34px, 9vw, 42px);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      color: var(--text);
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    .amount-input::-webkit-outer-spin-button,
+    .amount-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .converter-rows {
+      display: grid;
+      gap: 12px;
+    }
+
+    .converter-pair-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: end;
+      gap: 10px;
+    }
+
+    .converter-row {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .picker-row {
+      min-height: 58px;
+      padding-block: 10px;
+    }
+
+    .picker-row.compact {
+      width: 100%;
+      min-width: 0;
+      padding: 10px 14px;
+      gap: 10px;
+    }
+
+    .picker-row.compact .row-main {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .picker-row.compact .row-code {
+      font-size: 18px;
+      letter-spacing: 0.01em;
+    }
+
+    .picker-row.compact .row-label {
+      display: none;
+    }
+
+    .picker-row-arrow {
+      color: var(--muted-2);
+      font-size: 18px;
+      flex: 0 0 auto;
+    }
+
+    .swap-wrap {
+      display: flex;
+      justify-content: center;
+      align-self: end;
+      padding-bottom: 1px;
+    }
+
+    .swap-btn {
+      width: 50px;
+      height: 58px;
+      border-radius: 18px;
+      background: rgba(19, 32, 55, 0.94);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--text);
+      box-shadow: 0 12px 22px rgba(0, 0, 0, 0.16);
+    }
+
+    .result-primary {
+      font-size: clamp(32px, 8vw, 40px);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-secondary {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .picker-view {
+      display: grid;
+      gap: 14px;
+    }
+
+    .picker-topline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .picker-back {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.05);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      font-size: 20px;
+    }
+
+    .picker-title-block {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .picker-title {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+
+    .picker-title-note {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .a11y-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+      white-space: nowrap;
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(47, 212, 122, 0.34);
+      outline-offset: 2px;
+    }
+
+    @keyframes shimmer {
+      100% { transform: translateX(100%); }
+    }
+
+    @media (max-width: 480px) {
+      .app-header { gap: 12px; }
+      .header-actions { gap: 8px; }
+      .action-btn { padding-inline: 12px; font-size: 13px; }
+      .mode-btn { min-width: 78px; padding-inline: 12px; }
+    }
+
+    @media (max-width: 390px) {
+      .app-header { padding-inline: 16px; }
+      .base-strip { padding-inline: 16px; }
+      .content-area { padding-inline: 16px; }
+      .sheet-header { padding-inline: 16px; }
+      .sheet-scroll { padding-inline: 16px; }
+      .detail-summary,
+      .chart-card { padding: 12px; }
+      .chart-area,
+      .chart-empty,
+      .chart-svg { min-height: 176px; height: 176px; }
+      .metric-card { padding: 10px 8px; }
+      .metric-label { font-size: 10px; }
+      .metric-value { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <header class="app-header">
+      <div class="brand-block">
+        <div class="brand-kicker">Офіційний курс НБУ</div>
+        <h1 class="a11y-hidden">Курси та метали НБУ</h1>
+        <div class="mode-toggle" id="viewModeToggle" role="tablist" aria-label="Режим перегляду">
+          <button class="mode-btn active" type="button" data-view-mode="currencies" role="tab" aria-selected="true">Валюти</button>
+          <button class="mode-btn" type="button" data-view-mode="metals" role="tab" aria-selected="false">Метали</button>
+        </div>
+        <p class="header-meta" id="headerMeta">Завантаження даних…</p>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="refreshBtn" type="button" aria-label="Оновити курси">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 5V10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 19V14H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6.9 9C7.4 7.58 8.4 6.39 9.72 5.65C11.04 4.91 12.58 4.68 14.05 5.01C15.52 5.35 16.82 6.22 17.72 7.45L20 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M17.1 15C16.6 16.42 15.6 17.61 14.28 18.35C12.96 19.09 11.42 19.32 9.95 18.99C8.48 18.65 7.18 17.78 6.28 16.55L4 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="action-btn" id="openConverterBtn" type="button">Конвертер</button>
+      </div>
+    </header>
+
+    <section class="base-strip" aria-label="Вибір базової валюти">
+      <div class="base-context" id="baseContext">Курси відносно <strong>UAH</strong></div>
+      <div class="chips-row" id="baseChips"></div>
+    </section>
+
+    <main class="content-area" id="mainScrollArea">
+      <section class="cards-list" id="cardsList"></section>
+    </main>
+
+    <div class="overlay" id="baseOverlay" aria-hidden="true">
+      <div class="scrim" data-close-overlay="base"></div>
+      <section class="sheet sheet-compact" id="baseSheet" role="dialog" aria-modal="true" aria-labelledby="baseSheetTitle">
+        <div class="sheet-header">
+          <div class="sheet-grab" id="baseGrab" aria-hidden="true"></div>
+          <div class="sheet-topline">
+            <div class="sheet-title-group">
+              <h2 class="sheet-title" id="baseSheetTitle">Базова валюта</h2>
+              <p class="sheet-subtitle">Вибір змінює весь список курсів.</p>
+            </div>
+            <button class="sheet-close" id="closeBaseSheet" type="button" aria-label="Закрити">×</button>
+          </div>
+        </div>
+        <div class="sheet-scroll">
+          <div class="list-section">
+            <label class="a11y-hidden" for="baseSearch">Пошук валюти</label>
+            <input class="search-field" id="baseSearch" type="search" placeholder="Пошук за кодом або назвою" autocomplete="off" />
+            <div id="baseOptions"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="overlay" id="detailOverlay" aria-hidden="true">
+      <div class="scrim" data-close-overlay="detail"></div>
+      <section class="sheet sheet-medium" id="detailSheet" role="dialog" aria-modal="true" aria-labelledby="detailSheetTitle">
+        <div class="sheet-header">
+          <div class="sheet-grab" id="detailGrab" aria-hidden="true"></div>
+          <div class="sheet-topline">
+            <div class="sheet-title-group">
+              <h2 class="sheet-title" id="detailSheetTitle">Деталі валюти</h2>
+              <p class="sheet-subtitle" id="detailSheetSubtitle">Графік та динаміка</p>
+            </div>
+            <button class="sheet-close" id="closeDetailSheet" type="button" aria-label="Закрити">×</button>
+          </div>
+        </div>
+        <div class="sheet-scroll" id="detailBody"></div>
+      </section>
+    </div>
+
+    <div class="overlay" id="converterOverlay" aria-hidden="true">
+      <div class="scrim" data-close-overlay="converter"></div>
+      <section class="sheet sheet-compact" id="converterSheet" role="dialog" aria-modal="true" aria-labelledby="converterSheetTitle">
+        <div class="sheet-header">
+          <div class="sheet-grab" id="converterGrab" aria-hidden="true"></div>
+          <div class="sheet-topline">
+            <div class="sheet-title-group">
+              <h2 class="sheet-title" id="converterSheetTitle">Конвертер</h2>
+              <p class="sheet-subtitle" id="converterSheetSubtitle">Розрахунок через поточні курси НБУ</p>
+            </div>
+            <button class="sheet-close" id="closeConverterSheet" type="button" aria-label="Закрити">×</button>
+          </div>
+        </div>
+        <div class="sheet-scroll" id="converterBody"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const CURRENT_API = 'https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json';
+      const BY_DATE_API = (date) => `https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?date=${date}&json`;
+      
+      const DISPLAY_CODES = ['UAH', 'USD', 'EUR', 'PLN', 'CZK', 'GBP', 'CHF', 'CAD', 'RON', 'HUF', 'MDL', 'NOK', 'SEK', 'TRY', 'CNY', 'ILS'];
+      const DISPLAY_ORDER = new Map(DISPLAY_CODES.map((code, index) => [code, index]));
+      const QUICK_BASES = ['UAH', 'USD', 'EUR', 'PLN'];
+      const METAL_CODES = ['XAU', 'XAG', 'XPT', 'XPD'];
+      const METAL_LABELS = {
+        XAU: 'Золото',
+        XAG: 'Срібло',
+        XPT: 'Платина',
+        XPD: 'Паладій'
+      };
+      const EXCLUDED_CODES = new Set(METAL_CODES);
+      const PERIODS = [
+        { key: '7D', label: '7D', days: 7 },
+        { key: '1M', label: '1M', days: 31 },
+        { key: '3M', label: '3M', days: 92 },
+        { key: '1Y', label: '1Y', days: 366 }
+      ];
+      const PERIOD_FETCH_PLAN = {
+        '7D': { spanDays: 7, stepDays: 1 },
+        '1M': { spanDays: 31, stepDays: 1 },
+        '3M': { spanDays: 92, stepDays: 3 },
+        '1Y': { spanDays: 366, stepDays: 7 }
+      };
+      const STORAGE_KEYS = {
+        base: 'nbu.fx.base',
+        converterFrom: 'nbu.fx.converter.from',
+        converterTo: 'nbu.fx.converter.to',
+        converterAmount: 'nbu.fx.converter.amount',
+        viewMode: 'nbu.fx.view.mode'
+      };
+
+      const refs = {
+        headerMeta: document.getElementById('headerMeta'),
+        baseContext: document.getElementById('baseContext'),
+        baseChips: document.getElementById('baseChips'),
+        cardsList: document.getElementById('cardsList'),
+        refreshBtn: document.getElementById('refreshBtn'),
+        openConverterBtn: document.getElementById('openConverterBtn'),
+        viewModeToggle: document.getElementById('viewModeToggle'),
+        baseOverlay: document.getElementById('baseOverlay'),
+        baseSheet: document.getElementById('baseSheet'),
+        closeBaseSheet: document.getElementById('closeBaseSheet'),
+        baseSearch: document.getElementById('baseSearch'),
+        baseOptions: document.getElementById('baseOptions'),
+        detailOverlay: document.getElementById('detailOverlay'),
+        detailSheet: document.getElementById('detailSheet'),
+        closeDetailSheet: document.getElementById('closeDetailSheet'),
+        detailBody: document.getElementById('detailBody'),
+        detailSheetTitle: document.getElementById('detailSheetTitle'),
+        detailSheetSubtitle: document.getElementById('detailSheetSubtitle'),
+        converterOverlay: document.getElementById('converterOverlay'),
+        converterSheet: document.getElementById('converterSheet'),
+        closeConverterSheet: document.getElementById('closeConverterSheet'),
+        converterBody: document.getElementById('converterBody'),
+        converterSheetSubtitle: document.getElementById('converterSheetSubtitle'),
+        mainScrollArea: document.getElementById('mainScrollArea')
+      };
+
+      const state = {
+        loading: true,
+        refreshing: false,
+        error: null,
+        currentRates: null,
+        previousRates: null,
+        officialDate: null,
+        fetchedAt: null,
+        baseCurrency: readLS(STORAGE_KEYS.base, 'UAH'),
+        viewMode: ['currencies', 'metals'].includes(readLS(STORAGE_KEYS.viewMode, 'currencies')) ? readLS(STORAGE_KEYS.viewMode, 'currencies') : 'currencies',
+        activeOverlay: null,
+        baseSearch: '',
+        detailCurrency: null,
+        detailPeriod: '1M',
+        detailLoading: false,
+        detailError: null,
+        detailSeries: [],
+        detailRequestToken: 0,
+        chartActiveIndex: null,
+        historyCache: new Map(),
+        dayRatesCache: new Map(),
+        converter: {
+          amount: normalizeConverterAmount(readLS(STORAGE_KEYS.converterAmount, '')),
+          from: readLS(STORAGE_KEYS.converterFrom, 'USD'),
+          to: readLS(STORAGE_KEYS.converterTo, readLS(STORAGE_KEYS.base, 'UAH')),
+          pickerTarget: null,
+          search: ''
+        }
+      };
+
+      init();
+
+      function init() {
+        bindStaticEvents();
+        installSheetDrag(refs.baseSheet, document.getElementById('baseGrab'), closeBaseSheet);
+        installSheetDrag(refs.detailSheet, document.getElementById('detailGrab'), closeDetailSheet, { direction: 'down' });
+        installSheetDrag(refs.converterSheet, document.getElementById('converterGrab'), closeConverterSheet, { direction: 'up' });
+        renderViewToggle();
+        renderBaseChips();
+        renderCards();
+        renderBaseSheet();
+        renderDetailBody();
+        renderConverterBody();
+        loadCurrentRates();
+      }
+
+      function bindStaticEvents() {
+        refs.refreshBtn.addEventListener('click', () => loadCurrentRates(true));
+        refs.openConverterBtn.addEventListener('click', () => openConverterSheet());
+        refs.viewModeToggle.addEventListener('click', (event) => {
+          const btn = event.target.closest('[data-view-mode]');
+          if (!btn) return;
+          setViewMode(btn.dataset.viewMode);
+        });
+        refs.closeBaseSheet.addEventListener('click', closeBaseSheet);
+        refs.closeDetailSheet.addEventListener('click', closeDetailSheet);
+        refs.closeConverterSheet.addEventListener('click', closeConverterSheet);
+
+        document.querySelectorAll('[data-close-overlay]').forEach((el) => {
+          el.addEventListener('click', (event) => {
+            const type = event.currentTarget.dataset.closeOverlay;
+            if (type === 'base') closeBaseSheet();
+            if (type === 'detail') closeDetailSheet();
+            if (type === 'converter') closeConverterSheet();
+          });
+        });
+
+        refs.baseSearch.addEventListener('input', (event) => {
+          state.baseSearch = event.target.value || '';
+          renderBaseSheet();
+        });
+
+        refs.baseOptions.addEventListener('click', (event) => {
+          const row = event.target.closest('[data-base-code]');
+          if (!row) return;
+          setBaseCurrency(row.dataset.baseCode);
+          closeBaseSheet();
+        });
+
+        refs.baseChips.addEventListener('click', (event) => {
+          const chip = event.target.closest('[data-chip-action]');
+          if (!chip) return;
+          if (chip.dataset.chipAction === 'more') {
+            openBaseSheet();
+            return;
+          }
+          const code = chip.dataset.code;
+          if (code) setBaseCurrency(code);
+        });
+
+        refs.cardsList.addEventListener('click', (event) => {
+          const card = event.target.closest('[data-card-code]');
+          if (!card || !state.currentRates) return;
+          openDetailSheet(card.dataset.cardCode);
+        });
+
+        refs.detailBody.addEventListener('click', (event) => {
+          const periodBtn = event.target.closest('[data-period]');
+          if (periodBtn) {
+            const nextPeriod = periodBtn.dataset.period;
+            if (nextPeriod && nextPeriod !== state.detailPeriod) {
+              state.detailPeriod = nextPeriod;
+              state.chartActiveIndex = null;
+              if (state.detailCurrency) {
+                loadDetailHistory(state.detailCurrency);
+              } else {
+                renderDetailBody();
+              }
+            }
+            return;
+          }
+
+          const convertBtn = event.target.closest('[data-detail-convert]');
+          if (convertBtn && state.detailCurrency) {
+            state.converter.from = state.detailCurrency;
+            state.converter.to = state.baseCurrency;
+            persistConverterPrefs();
+            openConverterSheet(true);
+            return;
+          }
+
+          const retryBtn = event.target.closest('[data-detail-retry]');
+          if (retryBtn && state.detailCurrency) {
+            loadDetailHistory(state.detailCurrency, true);
+          }
+        });
+
+        refs.converterBody.addEventListener('click', (event) => {
+          const backBtn = event.target.closest('[data-converter-back]');
+          if (backBtn) {
+            state.converter.pickerTarget = null;
+            state.converter.search = '';
+            renderConverterBody();
+            focusAmountInputSoon();
+            return;
+          }
+
+          const pickerOpen = event.target.closest('[data-picker-open]');
+          if (pickerOpen) {
+            state.converter.pickerTarget = pickerOpen.dataset.pickerOpen;
+            state.converter.search = '';
+            renderConverterBody();
+            return;
+          }
+
+          const swapBtn = event.target.closest('[data-swap]');
+          if (swapBtn) {
+            const nextFrom = state.converter.to;
+            state.converter.to = state.converter.from;
+            state.converter.from = nextFrom;
+            persistConverterPrefs();
+            renderConverterBody();
+            focusAmountInputSoon();
+            return;
+          }
+
+          const pickRow = event.target.closest('[data-converter-code]');
+          if (pickRow && state.converter.pickerTarget) {
+            const code = pickRow.dataset.converterCode;
+            if (state.converter.pickerTarget === 'from') state.converter.from = code;
+            if (state.converter.pickerTarget === 'to') state.converter.to = code;
+            persistConverterPrefs();
+            state.converter.pickerTarget = null;
+            state.converter.search = '';
+            renderConverterBody();
+            focusAmountInputSoon();
+          }
+        });
+
+        refs.converterBody.addEventListener('input', (event) => {
+          if (event.target.matches('[data-amount-input]')) {
+            state.converter.amount = event.target.value;
+            persistConverterPrefs();
+            updateConverterResultOnly();
+          }
+
+          if (event.target.matches('[data-converter-search]')) {
+            state.converter.search = event.target.value || '';
+            renderConverterBody();
+            focusConverterSearchSoon();
+          }
+        });
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            closeAllOverlays();
+          }
+        });
+      }
+
+      async function loadCurrentRates(isManual = false) {
+        state.error = null;
+        if (state.currentRates && isManual) state.refreshing = true;
+        if (!state.currentRates) state.loading = true;
+        renderHeaderMeta();
+        renderCards();
+
+        try {
+          const response = await fetch(CURRENT_API, { cache: 'no-store' });
+          if (!response.ok) throw new Error('Не вдалося отримати поточні курси.');
+          const data = await response.json();
+          if (!Array.isArray(data) || !data.length) throw new Error('API НБУ не повернуло курси.');
+
+          const normalized = normalizeRatesArray(data);
+          if (!normalized.UAH) normalized.UAH = createUAHRow(data[0]?.exchangedate || formatDisplayDate(new Date()));
+          state.currentRates = normalized;
+          state.officialDate = pickOfficialDate(normalized);
+          state.fetchedAt = new Date();
+
+          ensureBaseAndConverterCurrenciesAreValid();
+
+          try {
+            state.previousRates = await fetchPreviousAvailableRates(state.officialDate);
+          } catch {
+            state.previousRates = null;
+          }
+
+          if (state.detailCurrency && state.activeOverlay === 'detail') {
+            loadDetailHistory(state.detailCurrency);
+          }
+        } catch (error) {
+          state.error = error?.message || 'Сталася помилка під час завантаження.';
+        } finally {
+          state.loading = false;
+          state.refreshing = false;
+          renderHeaderMeta();
+          renderBaseChips();
+          renderCards();
+          renderBaseSheet();
+          renderConverterBody();
+        }
+      }
+
+
+      async function fetchJsonFlexible(urls, errorMessage) {
+        let lastError = null;
+
+        for (const url of urls) {
+          try {
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const text = await response.text();
+            const trimmed = text.trim();
+            if (!trimmed) throw new Error('Порожня відповідь');
+            if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+              return JSON.parse(trimmed);
+            }
+            throw new Error('Відповідь не у JSON');
+          } catch (error) {
+            lastError = error;
+          }
+        }
+
+        throw new Error(errorMessage || lastError?.message || 'Не вдалося отримати дані.');
+      }
+
+      async function fetchPreviousAvailableRates(officialDate) {
+        if (!officialDate) return null;
+        const official = parseDisplayDate(officialDate);
+        if (!official) return null;
+
+        for (let offset = 1; offset <= 7; offset += 1) {
+          const date = new Date(official.getTime());
+          date.setDate(date.getDate() - offset);
+          let data;
+          try {
+            data = await fetchJsonFlexible([BY_DATE_API(formatApiDate(date))], 'Не вдалося отримати попередній курс.');
+          } catch {
+            continue;
+          }
+          if (Array.isArray(data) && data.length) {
+            const normalized = normalizeRatesArray(data);
+            normalized.UAH = createUAHRow(data[0]?.exchangedate || formatDisplayDate(date));
+            return normalized;
+          }
+        }
+        return null;
+      }
+
+      function ensureBaseAndConverterCurrenciesAreValid() {
+        const available = getAvailableCodes();
+        if (!available.includes(state.baseCurrency)) state.baseCurrency = 'UAH';
+        if (!available.includes(state.converter.from)) state.converter.from = 'USD';
+        if (!available.includes(state.converter.to)) state.converter.to = state.baseCurrency;
+        if (state.converter.from === state.converter.to && available.length > 1) {
+          state.converter.to = state.baseCurrency === state.converter.from ? 'UAH' : state.baseCurrency;
+        }
+        writeLS(STORAGE_KEYS.base, state.baseCurrency);
+        persistConverterPrefs();
+      }
+
+      function setBaseCurrency(code) {
+        if (!state.currentRates || !code || code === state.baseCurrency) return;
+        state.baseCurrency = code;
+        writeLS(STORAGE_KEYS.base, code);
+        renderBaseChips();
+        renderHeaderMeta();
+        renderCards();
+        renderConverterBody();
+
+        if (state.detailCurrency && state.activeOverlay === 'detail') {
+          loadDetailHistory(state.detailCurrency);
+        }
+      }
+
+      function openBaseSheet() {
+        if (!state.currentRates) return;
+        closeAllOverlays('base');
+        state.baseSearch = '';
+        refs.baseSearch.value = '';
+        refs.baseSearch.blur();
+        state.activeOverlay = 'base';
+        syncOverlayState();
+        renderBaseSheet();
+      }
+
+      function closeBaseSheet() {
+        if (state.activeOverlay !== 'base') return;
+        state.activeOverlay = null;
+        syncOverlayState();
+      }
+
+      function openDetailSheet(code) {
+        if (!state.currentRates || !code) return;
+        closeAllOverlays('detail');
+        state.detailCurrency = code;
+        state.detailPeriod = state.detailPeriod || '1M';
+        state.detailError = null;
+        state.detailLoading = true;
+        state.detailSeries = [];
+        state.chartActiveIndex = null;
+        state.activeOverlay = 'detail';
+        refs.detailBody.scrollTop = 0;
+        renderDetailBody();
+        syncOverlayState();
+        loadDetailHistory(code);
+      }
+
+      function closeDetailSheet() {
+        if (state.activeOverlay !== 'detail') return;
+        state.activeOverlay = null;
+        state.chartActiveIndex = null;
+        syncOverlayState();
+      }
+
+      function openConverterSheet(fromDetail = false) {
+        if (!state.currentRates) return;
+        closeAllOverlays('converter');
+        state.converter.pickerTarget = null;
+        state.converter.search = '';
+        state.converter.amount = '';
+        if (!fromDetail && state.converter.to === state.converter.from) {
+          state.converter.to = state.baseCurrency === state.converter.from ? 'UAH' : state.baseCurrency;
+        }
+        refs.converterBody.scrollTop = 0;
+        state.activeOverlay = 'converter';
+        renderConverterBody();
+        syncOverlayState();
+        persistConverterPrefs();
+        focusAmountInputSoon();
+      }
+
+      function closeConverterSheet() {
+        if (state.activeOverlay !== 'converter') return;
+        state.activeOverlay = null;
+        state.converter.pickerTarget = null;
+        state.converter.search = '';
+        syncOverlayState();
+      }
+
+      function closeAllOverlays(except = null) {
+        if (except !== 'base') refs.baseSheet.style.transform = '';
+        if (except !== 'detail') refs.detailSheet.style.transform = '';
+        if (except !== 'converter') refs.converterSheet.style.transform = '';
+        if (except === null) state.activeOverlay = null;
+        if (except === 'base' && state.activeOverlay !== 'base') state.activeOverlay = null;
+        if (except === 'detail' && state.activeOverlay !== 'detail') state.activeOverlay = null;
+        if (except === 'converter' && state.activeOverlay !== 'converter') state.activeOverlay = null;
+        syncOverlayState();
+      }
+
+      function syncOverlayState() {
+        const map = {
+          base: refs.baseOverlay,
+          detail: refs.detailOverlay,
+          converter: refs.converterOverlay
+        };
+
+        Object.entries(map).forEach(([key, overlay]) => {
+          const open = state.activeOverlay === key;
+          overlay.classList.toggle('open', open);
+          overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+        });
+      }
+
+      function renderHeaderMeta() {
+        if (state.loading && !state.currentRates) {
+          refs.headerMeta.textContent = 'Оновлення даних…';
+          return;
+        }
+        if (state.error && !state.currentRates) {
+          refs.headerMeta.textContent = 'Не вдалося отримати курси НБУ';
+          return;
+        }
+        const synced = state.fetchedAt ? formatTime(state.fetchedAt) : '—';
+        const official = state.officialDate ? `курс на ${state.officialDate}` : 'дата НБУ недоступна';
+        const suffix = state.refreshing ? ' · оновлення…' : '';
+        refs.headerMeta.textContent = `Оновлено ${synced} · курс ${official}${suffix}`;
+        refs.baseContext.innerHTML = `Курси відносно <strong>${escapeHtml(state.baseCurrency)}</strong>`;
+      }
+
+      function renderViewToggle() {
+        if (!refs.viewModeToggle) return;
+        refs.viewModeToggle.querySelectorAll('[data-view-mode]').forEach((btn) => {
+          const active = btn.dataset.viewMode === state.viewMode;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+      }
+
+      function setViewMode(mode) {
+        if (!['currencies', 'metals'].includes(mode) || mode === state.viewMode) return;
+        state.viewMode = mode;
+        writeLS(STORAGE_KEYS.viewMode, mode);
+        renderViewToggle();
+        renderCards();
+      }
+
+      function renderBaseChips() {
+        const chips = [];
+        const selectedNonQuick = state.baseCurrency && !QUICK_BASES.includes(state.baseCurrency) ? state.baseCurrency : null;
+        if (selectedNonQuick) {
+          chips.push(renderChip(selectedNonQuick, true));
+        }
+        QUICK_BASES.forEach((code) => chips.push(renderChip(code, state.baseCurrency === code)));
+        chips.push(`<button type="button" class="chip ${selectedNonQuick ? 'active' : ''}" data-chip-action="more">Ще</button>`);
+        refs.baseChips.innerHTML = chips.join('');
+      }
+
+      function renderChip(code, active) {
+        return `<button type="button" class="chip ${active ? 'active' : ''}" data-chip-action="set" data-code="${escapeAttr(code)}">${escapeHtml(code)}</button>`;
+      }
+
+      function renderCards() {
+        if (state.loading && !state.currentRates) {
+          refs.cardsList.innerHTML = renderSkeletonCards();
+          return;
+        }
+
+        if (state.error && !state.currentRates) {
+          refs.cardsList.innerHTML = `
+            <article class="state-card" role="alert">
+              <h2>Не вдалося завантажити курси</h2>
+              <p>${escapeHtml(state.error)}</p>
+              <div class="state-actions">
+                <button class="retry-btn" type="button" data-card-retry>Спробувати знову</button>
+              </div>
+            </article>
+          `;
+          const retry = refs.cardsList.querySelector('[data-card-retry]');
+          retry?.addEventListener('click', () => loadCurrentRates(true));
+          return;
+        }
+
+        if (!state.currentRates) {
+          refs.cardsList.innerHTML = `
+            <article class="empty-card">
+              <h2>Немає даних</h2>
+              <p>Поточні курси ще не доступні.</p>
+            </article>
+          `;
+          return;
+        }
+
+        const cards = getDisplayCards();
+        if (!cards.length) {
+          refs.cardsList.innerHTML = `
+            <article class="empty-card">
+              <h2>${state.viewMode === 'metals' ? 'Немає металів для показу' : 'Немає валют для показу'}</h2>
+              <p>${state.viewMode === 'metals' ? 'Спробуй оновити дані НБУ.' : 'Спробуй змінити базову валюту або оновити дані.'}</p>
+            </article>
+          `;
+          return;
+        }
+
+        refs.cardsList.innerHTML = cards.map((row) => {
+          const rate = getCrossRate(row.cc, state.baseCurrency, state.currentRates);
+          const change = getDailyChange(row.cc, state.baseCurrency);
+          const deltaClass = change ? (change.absolute > 0 ? 'up' : change.absolute < 0 ? 'down' : '') : '';
+          const deltaSign = change ? (change.absolute > 0 ? '↗' : change.absolute < 0 ? '↘' : '•') : '•';
+          const deltaText = change
+            ? `${deltaSign} ${formatSignedPercent(change.percent)}`
+            : '• Н/Д';
+
+          return `
+            <button class="currency-card" type="button" data-card-code="${escapeAttr(row.cc)}" aria-label="Відкрити ${escapeAttr(row.txt)}">
+              <div class="card-top">
+                <div class="card-code-group">
+                  <div class="card-code">${escapeHtml(row.cc)}</div>
+                  <div class="card-name">${escapeHtml(row.txt)}</div>
+                </div>
+                <div class="card-chevron" aria-hidden="true">›</div>
+              </div>
+              <div class="card-bottom">
+                <div class="card-rate-block">
+                  <div class="card-rate">${formatRate(rate, state.viewMode === 'metals' ? 2 : 4)}</div>
+                  <div class="card-rate-caption">1 ${escapeHtml(row.cc)} = ${formatRate(rate, state.viewMode === 'metals' ? 2 : 4)} ${escapeHtml(state.baseCurrency)}</div>
+                </div>
+                <div class="delta-stack">
+                  <div class="delta-pill ${deltaClass}">${deltaText}</div>
+                  <div class="delta-caption">Зміна за день</div>
+                </div>
+              </div>
+            </button>
+          `;
+        }).join('');
+      }
+
+      function renderBaseSheet() {
+        if (!state.currentRates) {
+          refs.baseOptions.innerHTML = `
+            <article class="inline-state">
+              <h3>Немає списку валют</h3>
+              <p>Завантаж поточні курси, щоб обрати базу.</p>
+            </article>
+          `;
+          return;
+        }
+
+        const query = state.baseSearch.trim().toLowerCase();
+        const list = getAllCurrencyRows()
+          .filter((row) => !QUICK_BASES.includes(row.cc))
+          .filter((row) => {
+            if (!query) return true;
+            const hay = `${row.cc} ${row.txt} ${(row.enname || '')}`.toLowerCase();
+            return hay.includes(query);
+          });
+
+        if (!list.length) {
+          refs.baseOptions.innerHTML = `
+            <article class="inline-state">
+              <h3>Нічого не знайдено</h3>
+              <p>Спробуй інший код або частину назви валюти.</p>
+            </article>
+          `;
+          return;
+        }
+
+        refs.baseOptions.innerHTML = list.map((row) => `
+          <button type="button" class="list-row ${state.baseCurrency === row.cc ? 'active' : ''}" data-base-code="${escapeAttr(row.cc)}">
+            <div class="row-main">
+              <div class="row-code">${escapeHtml(row.cc)}</div>
+              <div class="row-label">${escapeHtml(row.txt)}</div>
+            </div>
+            <div class="row-tag">${state.baseCurrency === row.cc ? 'Активна' : ''}</div>
+          </button>
+        `).join('');
+      }
+
+      function renderDetailBody() {
+        if (!state.detailCurrency || !state.currentRates) {
+          refs.detailBody.innerHTML = `
+            <article class="inline-state">
+              <h3>Оберіть валюту</h3>
+              <p>Тапни по картці, щоб подивитися історію та графік.</p>
+            </article>
+          `;
+          return;
+        }
+
+        const row = state.currentRates[state.detailCurrency];
+        if (!row) {
+          refs.detailBody.innerHTML = `
+            <article class="inline-state">
+              <h3>Дані недоступні</h3>
+              <p>Для цієї валюти зараз немає поточного курсу.</p>
+            </article>
+          `;
+          return;
+        }
+
+        refs.detailSheetTitle.textContent = row.cc;
+        refs.detailSheetSubtitle.textContent = `Графік у базі ${state.baseCurrency}`;
+
+        const rate = getCrossRate(row.cc, state.baseCurrency, state.currentRates);
+        const currentChange = getDailyChange(row.cc, state.baseCurrency);
+        const currentDeltaClass = currentChange ? (currentChange.absolute > 0 ? 'up' : currentChange.absolute < 0 ? 'down' : '') : '';
+        const currentDeltaText = currentChange ? `${formatSignedPercent(currentChange.percent)} · ${formatSignedNumber(currentChange.absolute)}` : 'Немає попереднього дня';
+        const selectedPeriod = PERIODS.find((item) => item.key === state.detailPeriod) || PERIODS[1];
+        const series = state.detailSeries;
+        const derived = series.length ? deriveSeriesMetrics(series) : null;
+
+        let lowerSection = '';
+        if (state.detailLoading) {
+          lowerSection = `
+            <article class="chart-card">
+              <div class="chart-empty">Завантаження історії…</div>
+            </article>
+          `;
+        } else if (state.detailError) {
+          lowerSection = `
+            <article class="chart-card">
+              <div class="chart-empty">
+                <div>
+                  <strong>Не вдалося завантажити графік.</strong><br />
+                  <span>${escapeHtml(state.detailError)}</span>
+                  <div class="state-actions" style="justify-content:center; margin-top:14px;">
+                    <button class="retry-btn" type="button" data-detail-retry>Спробувати ще раз</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          `;
+        } else if (!series.length) {
+          lowerSection = `
+            <article class="chart-card">
+              <div class="chart-empty">Немає історичних даних для періоду ${escapeHtml(selectedPeriod.label)}.</div>
+            </article>
+          `;
+        } else {
+          lowerSection = `
+            <article class="chart-card">
+              <div class="chart-meta">
+                <div class="chart-meta-value">
+                  <div class="chart-value-label" id="chartValueLabel">${formatRate(getActiveChartValue(series), getCurrentViewRateDigits())} ${escapeHtml(state.baseCurrency)}</div>
+                  <div class="chart-secondary" id="chartDateLabel">${escapeHtml(getActiveChartDateLabel(series))}</div>
+                </div>
+                <div class="chart-secondary">${escapeHtml(selectedPeriod.label)} · 1 ${escapeHtml(row.cc)}</div>
+              </div>
+              <div class="chart-area" id="detailChartArea"></div>
+            </article>
+            <div class="metrics-grid">
+              <article class="metric-card">
+                <div class="metric-label">Мінімум</div>
+                <div class="metric-value">${formatRate(derived.min, getCurrentViewRateDigits())}</div>
+              </article>
+              <article class="metric-card">
+                <div class="metric-label">Максимум</div>
+                <div class="metric-value">${formatRate(derived.max, getCurrentViewRateDigits())}</div>
+              </article>
+              <article class="metric-card">
+                <div class="metric-label">Зміна</div>
+                <div class="metric-value ${derived.changeAbsolute > 0 ? 'up' : derived.changeAbsolute < 0 ? 'down' : ''}">${formatSignedPercent(derived.changePercent)}</div>
+              </article>
+            </div>
+          `;
+        }
+
+        refs.detailBody.innerHTML = `
+          <div class="detail-layout">
+            <article class="detail-summary">
+              <div class="detail-summary-top">
+                <div class="detail-code-block">
+                  <div class="detail-code">${escapeHtml(row.cc)}</div>
+                  <div class="detail-name">${escapeHtml(row.txt)}</div>
+                </div>
+                <div class="delta-pill ${currentDeltaClass}">${escapeHtml(currentDeltaText)}</div>
+              </div>
+              <div class="detail-rate">
+                <div class="detail-rate-value">${formatRate(rate, getCurrentViewRateDigits())}</div>
+                <div class="detail-rate-caption">1 ${escapeHtml(row.cc)} = ${formatRate(rate, getCurrentViewRateDigits())} ${escapeHtml(state.baseCurrency)}</div>
+              </div>
+              <div class="detail-actions">
+                <button class="ghost-btn" type="button" data-detail-convert>Конвертувати</button>
+              </div>
+            </article>
+            <div class="period-row" aria-label="Період графіка">
+              ${PERIODS.map((period) => `
+                <button class="period-chip ${period.key === state.detailPeriod ? 'active' : ''}" type="button" data-period="${escapeAttr(period.key)}">${escapeHtml(period.label)}</button>
+              `).join('')}
+            </div>
+            ${lowerSection}
+          </div>
+        `;
+
+        if (!state.detailLoading && !state.detailError && series.length) {
+          const chartArea = document.getElementById('detailChartArea');
+          if (chartArea) {
+            renderChart(chartArea, series, row.cc, state.baseCurrency);
+          }
+        }
+      }
+
+      function renderConverterBody() {
+        if (!state.currentRates) {
+          refs.converterBody.innerHTML = `
+            <article class="inline-state">
+              <h3>Конвертер тимчасово недоступний</h3>
+              <p>Спочатку потрібно завантажити поточні курси НБУ.</p>
+            </article>
+          `;
+          return;
+        }
+
+        refs.converterSheetSubtitle.textContent = state.converter.pickerTarget
+          ? 'Оберіть валюту'
+          : 'Розрахунок через поточні курси НБУ';
+
+        if (state.converter.pickerTarget) {
+          const query = state.converter.search.trim().toLowerCase();
+          const rows = getAllCurrencyRows().filter((row) => {
+            if (!query) return true;
+            const hay = `${row.cc} ${row.txt} ${(row.enname || '')}`.toLowerCase();
+            return hay.includes(query);
+          });
+          const selectedCode = state.converter[state.converter.pickerTarget];
+          refs.converterBody.innerHTML = `
+            <div class="picker-view">
+              <div class="picker-topline">
+                <button class="picker-back" type="button" data-converter-back aria-label="Назад">‹</button>
+                <div class="picker-title-block">
+                  <h3 class="picker-title">${state.converter.pickerTarget === 'from' ? 'Валюта “з”' : 'Валюта “в”'}</h3>
+                  <p class="picker-title-note">Пошук за кодом або назвою</p>
+                </div>
+              </div>
+              <label class="a11y-hidden" for="converterSearch">Пошук валюти</label>
+              <input class="search-field" id="converterSearch" data-converter-search type="search" placeholder="Пошук валюти" autocomplete="off" value="${escapeAttr(state.converter.search)}" />
+              <div class="list-section">
+                ${rows.length ? rows.map((row) => `
+                  <button type="button" class="list-row ${selectedCode === row.cc ? 'active' : ''}" data-converter-code="${escapeAttr(row.cc)}">
+                    <div class="row-main">
+                      <div class="row-code">${escapeHtml(row.cc)}</div>
+                      <div class="row-label">${escapeHtml(row.txt)}</div>
+                    </div>
+                    <div class="row-tag">${selectedCode === row.cc ? 'Обрано' : ''}</div>
+                  </button>
+                `).join('') : `
+                  <article class="inline-state">
+                    <h3>Нічого не знайдено</h3>
+                    <p>Спробуй інший код або частину назви.</p>
+                  </article>
+                `}
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        const amountNumber = parseInputNumber(state.converter.amount);
+        const result = Number.isFinite(amountNumber)
+          ? convertAmount(amountNumber, state.converter.from, state.converter.to)
+          : null;
+        const rateHint = getCrossRate(state.converter.from, state.converter.to, state.currentRates);
+
+        refs.converterBody.innerHTML = `
+          <div class="converter-layout">
+            <div class="converter-main">
+              <article class="input-card">
+                <div class="input-label">Сума</div>
+                <input class="amount-input" data-amount-input id="converterAmountInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${escapeAttr(state.converter.amount)}" />
+              </article>
+
+              <div class="converter-rows">
+                <div class="converter-pair-row">
+                  <div class="converter-row">
+                    <div class="section-label">З</div>
+                    <button class="picker-row compact" type="button" data-picker-open="from">
+                      <div class="row-main">
+                        <div class="row-code">${escapeHtml(state.converter.from)}</div>
+                      </div>
+                      <div class="picker-row-arrow">›</div>
+                    </button>
+                  </div>
+
+                  <div class="swap-wrap">
+                    <button class="swap-btn" type="button" data-swap aria-label="Поміняти валюту місцями">⇅</button>
+                  </div>
+
+                  <div class="converter-row">
+                    <div class="section-label">В</div>
+                    <button class="picker-row compact" type="button" data-picker-open="to">
+                      <div class="row-main">
+                        <div class="row-code">${escapeHtml(state.converter.to)}</div>
+                      </div>
+                      <div class="picker-row-arrow">›</div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <article class="result-card">
+                <div class="input-label">Результат</div>
+                <div class="result-primary" id="converterResultLabel">${result === null ? '—' : `${formatAmount(result)} ${escapeHtml(state.converter.to)}`}</div>
+                <div class="result-secondary" id="converterHintLabel">${Number.isFinite(amountNumber) ? `${formatAmount(amountNumber)} ${escapeHtml(state.converter.from)} = ${formatAmount(result)} ${escapeHtml(state.converter.to)}` : 'Введи суму для розрахунку.'}</div>
+                <div class="result-secondary">1 ${escapeHtml(state.converter.from)} = ${formatRate(rateHint)} ${escapeHtml(state.converter.to)}</div>
+              </article>
+            </div>
+          </div>
+        `;
+      }
+
+      function updateConverterResultOnly() {
+        const resultLabel = document.getElementById('converterResultLabel');
+        const hintLabel = document.getElementById('converterHintLabel');
+        if (!resultLabel || !hintLabel || !state.currentRates) return;
+        const amount = parseInputNumber(state.converter.amount);
+        const result = Number.isFinite(amount) ? convertAmount(amount, state.converter.from, state.converter.to) : null;
+        resultLabel.textContent = result === null ? '—' : `${formatAmount(result)} ${state.converter.to}`;
+        hintLabel.textContent = Number.isFinite(amount)
+          ? `${formatAmount(amount)} ${state.converter.from} = ${formatAmount(result)} ${state.converter.to}`
+          : 'Введи суму для розрахунку.';
+      }
+
+      async function loadDetailHistory(code, force = false) {
+        if (!code || !state.currentRates) return;
+        const requestId = ++state.detailRequestToken;
+        state.detailLoading = true;
+        state.detailError = null;
+        state.detailSeries = [];
+        state.chartActiveIndex = null;
+        renderDetailBody();
+
+        try {
+          await ensureHistoryReady(code, state.detailPeriod, force);
+          if (state.baseCurrency !== 'UAH' && state.baseCurrency !== code) {
+            await ensureHistoryReady(state.baseCurrency, state.detailPeriod, force);
+          }
+          if (requestId !== state.detailRequestToken) return;
+          state.detailSeries = buildSeriesForDetail(code, state.baseCurrency, state.detailPeriod);
+          state.detailLoading = false;
+          state.detailError = null;
+        } catch (error) {
+          if (requestId !== state.detailRequestToken) return;
+          state.detailLoading = false;
+          state.detailError = error?.message || 'Не вдалося отримати історію.';
+        }
+
+        if (requestId === state.detailRequestToken) {
+          renderDetailBody();
+        }
+      }
+
+      function historyCacheKey(code, periodKey) {
+        return `${code}:${periodKey}`;
+      }
+
+      function buildHistorySampleDates(endDate, periodKey) {
+        const plan = PERIOD_FETCH_PLAN[periodKey] || PERIOD_FETCH_PLAN['1M'];
+        const dates = [];
+
+        for (let offset = plan.spanDays - 1; offset >= 0; offset -= plan.stepDays) {
+          const date = new Date(endDate.getTime());
+          date.setDate(date.getDate() - offset);
+          dates.push(date);
+        }
+
+        const lastDate = dates[dates.length - 1];
+        if (!lastDate || formatApiDate(lastDate) !== formatApiDate(endDate)) {
+          dates.push(new Date(endDate.getTime()));
+        }
+
+        const seen = new Set();
+        return dates.filter((date) => {
+          const key = formatApiDate(date);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      async function loadRatesSnapshot(targetDate, force = false) {
+        const requestedKey = formatApiDate(targetDate);
+        if (!force && state.dayRatesCache.has(requestedKey)) return state.dayRatesCache.get(requestedKey);
+
+        for (let offset = 0; offset <= 4; offset += 1) {
+          const probeDate = new Date(targetDate.getTime());
+          probeDate.setDate(probeDate.getDate() - offset);
+          const probeKey = formatApiDate(probeDate);
+
+          if (!force && state.dayRatesCache.has(probeKey)) {
+            const cached = state.dayRatesCache.get(probeKey);
+            state.dayRatesCache.set(requestedKey, cached);
+            return cached;
+          }
+
+          let data;
+          try {
+            data = await fetchJsonFlexible([BY_DATE_API(probeKey)], `Не вдалося отримати курс НБУ на ${probeKey}.`);
+          } catch {
+            continue;
+          }
+
+          if (Array.isArray(data) && data.length) {
+            const normalized = normalizeRatesArray(data);
+            normalized.UAH = createUAHRow(data[0]?.exchangedate || formatDisplayDate(probeDate));
+            const actualIso = toIsoDate(data[0]?.exchangedate) || probeKeyToIso(probeKey);
+            const snapshot = {
+              date: actualIso,
+              rates: normalized
+            };
+            state.dayRatesCache.set(probeKey, snapshot);
+            state.dayRatesCache.set(requestedKey, snapshot);
+            return snapshot;
+          }
+        }
+
+        state.dayRatesCache.set(requestedKey, null);
+        return null;
+      }
+
+      function probeKeyToIso(value) {
+        if (!value || value.length !== 8) return null;
+        return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
+      }
+
+      async function ensureHistoryReady(code, periodKey, force = false) {
+        if (code === 'UAH') return;
+        const cacheKey = historyCacheKey(code, periodKey);
+        if (!force && state.historyCache.has(cacheKey)) return;
+
+        const endDate = state.officialDate ? parseDisplayDate(state.officialDate) : new Date();
+        const sampleDates = buildHistorySampleDates(endDate, periodKey);
+        const snapshots = await Promise.all(sampleDates.map((date) => loadRatesSnapshot(date, force)));
+
+        const deduped = new Map();
+        snapshots.forEach((snapshot) => {
+          const row = snapshot?.rates?.[code];
+          if (!snapshot || !row || !snapshot.date || !Number.isFinite(Number(row.rate))) return;
+          deduped.set(snapshot.date, {
+            date: snapshot.date,
+            displayDate: row.exchangedate || formatDisplayDate(new Date(`${snapshot.date}T00:00:00`)),
+            rateUAH: Number(row.rate),
+            txt: row.txt || row.enname || code,
+            cc: row.cc || code
+          });
+        });
+
+        const points = Array.from(deduped.values()).sort((a, b) => a.date.localeCompare(b.date));
+        if (!points.length) throw new Error(`Немає історичних даних для ${code}.`);
+        state.historyCache.set(cacheKey, points);
+      }
+
+      function buildSeriesForDetail(code, base, periodKey) {
+        if (code === 'UAH') {
+          if (base === 'UAH') return [];
+          const baseHistory = state.historyCache.get(historyCacheKey(base, periodKey)) || [];
+          return baseHistory
+            .map((point) => {
+              if (!Number.isFinite(point.rateUAH) || point.rateUAH <= 0) return null;
+              return {
+                date: point.date,
+                displayDate: point.displayDate,
+                value: 1 / point.rateUAH
+              };
+            })
+            .filter(Boolean);
+        }
+
+        const targetHistory = state.historyCache.get(historyCacheKey(code, periodKey)) || [];
+        if (!targetHistory.length) return [];
+
+        if (base === code) {
+          return targetHistory.map((point) => ({
+            date: point.date,
+            displayDate: point.displayDate,
+            value: 1
+          }));
+        }
+
+        const baseMap = base === 'UAH'
+          ? null
+          : new Map((state.historyCache.get(historyCacheKey(base, periodKey)) || []).map((item) => [item.date, item.rateUAH]));
+
+        return targetHistory
+          .map((point) => {
+            const denominator = base === 'UAH' ? 1 : baseMap.get(point.date);
+            if (!Number.isFinite(denominator) || denominator <= 0) return null;
+            return {
+              date: point.date,
+              displayDate: point.displayDate,
+              value: point.rateUAH / denominator
+            };
+          })
+          .filter(Boolean);
+      }
+
+      function renderChart(container, series, currencyCode, baseCode) {
+        state.chartActiveIndex = clamp(state.chartActiveIndex ?? series.length - 1, 0, series.length - 1);
+        const width = Math.max(container.clientWidth || 0, 280);
+        const height = 220;
+        const padding = { top: 18, right: 12, bottom: 42, left: 58 };
+        const plotWidth = width - padding.left - padding.right;
+        const plotHeight = height - padding.top - padding.bottom;
+        const values = series.map((point) => point.value);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const desiredYTicks = clamp(Math.floor(plotHeight / 46), 3, 6);
+        const yScale = buildNiceScale(min, max, desiredYTicks);
+        const yMin = yScale.min;
+        const yMax = yScale.max;
+
+        const points = series.map((point, index) => {
+          const x = padding.left + (plotWidth * index) / Math.max(series.length - 1, 1);
+          const y = padding.top + (1 - (point.value - yMin) / Math.max(yMax - yMin, 0.0000001)) * plotHeight;
+          return { ...point, x, y };
+        });
+
+        const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(' ');
+        const areaPath = `${linePath} L${points[points.length - 1].x.toFixed(2)},${(height - padding.bottom).toFixed(2)} L${points[0].x.toFixed(2)},${(height - padding.bottom).toFixed(2)} Z`;
+
+        const activePoint = points[state.chartActiveIndex];
+        const finePointer = window.matchMedia('(pointer: fine)').matches;
+        const xLabels = buildEvenXAxisLabels(points, padding.left, plotWidth);
+
+        const yLabels = yScale.ticks.map((value) => ({
+          y: padding.top + (1 - (value - yMin) / Math.max(yMax - yMin, 0.0000001)) * plotHeight,
+          label: formatAxisTickValue(value, yScale.step)
+        }));
+
+        container.innerHTML = `
+          <svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Графік курсу ${escapeAttr(currencyCode)}">
+            <defs>
+              <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0f8f55" stop-opacity="0.22" />
+                <stop offset="100%" stop-color="#0f8f55" stop-opacity="0.01" />
+              </linearGradient>
+            </defs>
+            ${yLabels.map((label) => `<line class="chart-grid" x1="${padding.left}" y1="${label.y}" x2="${width - padding.right}" y2="${label.y}" />`).join('')}
+            <path class="chart-area-fill" d="${areaPath}" />
+            <path class="chart-path" d="${linePath}" />
+            ${yLabels.map((label) => `<text class="chart-axis-label" x="${padding.left - 8}" y="${label.y + 3}" text-anchor="end">${escapeHtml(label.label)}</text>`).join('')}
+            ${xLabels.map((label) => `<text class="chart-axis-label" x="${label.x}" y="${height - 12}" text-anchor="${label.anchor}">${escapeHtml(label.label)}</text>`).join('')}
+            <g id="chartFocusGroup">
+              <line class="chart-focus-line" x1="${activePoint.x}" y1="${padding.top}" x2="${activePoint.x}" y2="${height - padding.bottom}" />
+              <circle class="chart-focus-dot" cx="${activePoint.x}" cy="${activePoint.y}" r="6" />
+            </g>
+            <rect class="chart-hit" x="${padding.left}" y="${padding.top}" width="${plotWidth}" height="${plotHeight}" />
+          </svg>
+        `;
+
+        updateDetailChartLabels();
+
+        const svg = container.querySelector('svg');
+        const focusLine = svg?.querySelector('.chart-focus-line');
+        const focusDot = svg?.querySelector('.chart-focus-dot');
+        const hit = svg?.querySelector('.chart-hit');
+        if (!hit || !focusLine || !focusDot) return;
+
+        const moveToIndex = (index) => {
+          const safeIndex = clamp(index, 0, points.length - 1);
+          state.chartActiveIndex = safeIndex;
+          const point = points[safeIndex];
+          focusLine.setAttribute('x1', point.x);
+          focusLine.setAttribute('x2', point.x);
+          focusDot.setAttribute('cx', point.x);
+          focusDot.setAttribute('cy', point.y);
+          updateDetailChartLabels();
+        };
+
+        const getIndexFromEvent = (event) => {
+          const rect = hit.getBoundingClientRect();
+          const clientX = event.clientX ?? (event.touches && event.touches[0]?.clientX) ?? rect.left;
+          const relativeX = clientX - rect.left;
+          const ratio = relativeX / rect.width;
+          return Math.round(ratio * (points.length - 1));
+        };
+
+        if (finePointer) {
+          hit.addEventListener('pointermove', (event) => moveToIndex(getIndexFromEvent(event)));
+          hit.addEventListener('pointerleave', () => {
+            state.chartActiveIndex = points.length - 1;
+            moveToIndex(points.length - 1);
+          });
+        } else {
+          let isTouchTracking = false;
+
+          hit.addEventListener('click', (event) => moveToIndex(getIndexFromEvent(event)));
+
+          hit.addEventListener('touchstart', (event) => {
+            const touch = event.touches && event.touches[0];
+            if (!touch) return;
+            isTouchTracking = true;
+            moveToIndex(getIndexFromEvent(touch));
+            event.preventDefault();
+          }, { passive: false });
+
+          hit.addEventListener('touchmove', (event) => {
+            if (!isTouchTracking) return;
+            const touch = event.touches && event.touches[0];
+            if (!touch) return;
+            moveToIndex(getIndexFromEvent(touch));
+            event.preventDefault();
+          }, { passive: false });
+
+          const stopTouchTracking = () => {
+            isTouchTracking = false;
+          };
+
+          hit.addEventListener('touchend', stopTouchTracking, { passive: true });
+          hit.addEventListener('touchcancel', stopTouchTracking, { passive: true });
+        }
+      }
+
+      function buildNiceScale(min, max, targetTicks) {
+        const safeTarget = clamp(targetTicks || 4, 3, 7);
+        if (!Number.isFinite(min) || !Number.isFinite(max)) {
+          return { min: 0, max: 1, step: 0.25, ticks: [0, 0.5, 1] };
+        }
+
+        if (min === max) {
+          const baseSpread = Math.max(Math.abs(max) * 0.08, 0.01);
+          min -= baseSpread;
+          max += baseSpread;
+        }
+
+        const rawRange = Math.max(max - min, 0.0000001);
+        let step = niceStep(rawRange / Math.max(safeTarget - 1, 1));
+        let niceMin = Math.floor(min / step) * step;
+        let niceMax = Math.ceil(max / step) * step;
+        let ticks = generateTicks(niceMin, niceMax, step);
+
+        while (ticks.length > safeTarget + 1) {
+          step = nextNiceStep(step);
+          niceMin = Math.floor(min / step) * step;
+          niceMax = Math.ceil(max / step) * step;
+          ticks = generateTicks(niceMin, niceMax, step);
+        }
+
+        if (ticks.length < 3) {
+          const fallbackStep = niceStep(rawRange / 2 || 0.01);
+          niceMin = min - fallbackStep;
+          niceMax = max + fallbackStep;
+          step = fallbackStep;
+          ticks = generateTicks(niceMin, niceMax, step);
+        }
+
+        return { min: niceMin, max: niceMax, step, ticks };
+      }
+
+      function niceStep(rawStep) {
+        const safeStep = Math.max(rawStep, 0.0000001);
+        const exponent = Math.floor(Math.log10(safeStep));
+        const magnitude = 10 ** exponent;
+        const fraction = safeStep / magnitude;
+        let niceFraction;
+        if (fraction <= 1) niceFraction = 1;
+        else if (fraction <= 2) niceFraction = 2;
+        else if (fraction <= 2.5) niceFraction = 2.5;
+        else if (fraction <= 5) niceFraction = 5;
+        else niceFraction = 10;
+        return niceFraction * magnitude;
+      }
+
+      function nextNiceStep(step) {
+        return niceStep(step * 1.6);
+      }
+
+      function generateTicks(min, max, step) {
+        const ticks = [];
+        const limit = 20;
+        const epsilon = step / 1000;
+        for (let value = min, count = 0; value <= max + epsilon && count < limit; value += step, count += 1) {
+          ticks.push(Number(value.toFixed(10)));
+        }
+        return ticks;
+      }
+
+      function buildEvenXAxisLabels(points, plotLeft, plotWidth) {
+        if (!points.length) return [];
+        if (points.length === 1) {
+          return [{ x: points[0].x, label: formatAxisDateLabel(points[0].date), anchor: 'middle' }];
+        }
+
+        const minGap = plotWidth < 260 ? 56 : plotWidth < 360 ? 62 : plotWidth < 520 ? 70 : 82;
+        const labelCount = clamp(Math.floor(plotWidth / minGap) + 1, 3, 8);
+
+        return Array.from({ length: labelCount }, (_, index) => {
+          const ratio = labelCount === 1 ? 0 : index / (labelCount - 1);
+          const pointIndex = Math.round(ratio * (points.length - 1));
+          return {
+            x: plotLeft + ratio * plotWidth,
+            label: formatAxisDateLabel(points[pointIndex].date),
+            anchor: index === 0 ? 'start' : index === labelCount - 1 ? 'end' : 'middle'
+          };
+        });
+      }
+
+      function formatAxisTickValue(value, step) {
+        if (!Number.isFinite(value)) return '—';
+        return new Intl.NumberFormat('uk-UA', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(value);
+      }
+
+      function updateDetailChartLabels() {
+        const series = state.detailSeries;
+        if (!series.length) return;
+        const point = series[clamp(state.chartActiveIndex ?? series.length - 1, 0, series.length - 1)];
+        const valueLabel = document.getElementById('chartValueLabel');
+        const dateLabel = document.getElementById('chartDateLabel');
+        if (valueLabel) valueLabel.textContent = `${formatRate(point.value, getCurrentViewRateDigits())} ${state.baseCurrency}`;
+        if (dateLabel) dateLabel.textContent = point.displayDate;
+      }
+
+      function getActiveChartValue(series) {
+        const point = series[clamp(state.chartActiveIndex ?? series.length - 1, 0, series.length - 1)];
+        return point?.value ?? 0;
+      }
+
+      function getActiveChartDateLabel(series) {
+        const point = series[clamp(state.chartActiveIndex ?? series.length - 1, 0, series.length - 1)];
+        return point?.displayDate ?? '';
+      }
+
+      function deriveSeriesMetrics(series) {
+        const values = series.map((point) => point.value);
+        const first = values[0];
+        const last = values[values.length - 1];
+        const changeAbsolute = last - first;
+        return {
+          min: Math.min(...values),
+          max: Math.max(...values),
+          changeAbsolute,
+          changePercent: first ? (changeAbsolute / first) * 100 : 0
+        };
+      }
+
+      function getDisplayCards() {
+        if (!state.currentRates) return [];
+        const codes = state.viewMode === 'metals' ? METAL_CODES : DISPLAY_CODES;
+        return codes
+          .map((code) => state.currentRates[code])
+          .filter(Boolean)
+          .filter((row) => state.viewMode === 'metals' ? true : row.cc !== state.baseCurrency);
+      }
+
+      function getAllCurrencyRows() {
+        if (!state.currentRates) return [];
+        return DISPLAY_CODES
+          .map((code) => state.currentRates[code])
+          .filter(Boolean)
+          .filter((row) => !EXCLUDED_CODES.has(row.cc));
+      }
+
+      function getAvailableCodes() {
+        if (!state.currentRates) return ['UAH'];
+        return DISPLAY_CODES.filter((code) => state.currentRates[code] && !EXCLUDED_CODES.has(code));
+      }
+
+      function getCurrencyName(code) {
+        if (code === 'UAH') return 'Українська гривня';
+        if (METAL_LABELS[code]) return METAL_LABELS[code];
+        return state.currentRates?.[code]?.txt || code;
+      }
+
+      function getCrossRate(targetCode, baseCode, map) {
+        const target = getUAHRate(targetCode, map);
+        const base = getUAHRate(baseCode, map);
+        return target / base;
+      }
+
+      function getDailyChange(targetCode, baseCode) {
+        if (!state.currentRates || !state.previousRates) return null;
+        const current = getCrossRate(targetCode, baseCode, state.currentRates);
+        const previous = getCrossRate(targetCode, baseCode, state.previousRates);
+        if (!Number.isFinite(previous) || previous === 0) return null;
+        const absolute = current - previous;
+        return {
+          absolute,
+          percent: (absolute / previous) * 100
+        };
+      }
+
+      function convertAmount(amount, from, to) {
+        if (!state.currentRates || !Number.isFinite(amount)) return null;
+        const inUAH = amount * getUAHRate(from, state.currentRates);
+        return inUAH / getUAHRate(to, state.currentRates);
+      }
+
+      function getUAHRate(code, map) {
+        if (code === 'UAH') return 1;
+        const row = map?.[code];
+        return Number(row?.ratePerUnit ?? row?.rate ?? NaN);
+      }
+
+      function normalizeRatesArray(rows) {
+        return rows.reduce((acc, row) => {
+          if (!row?.cc) return acc;
+          const units = Number(row.units) || 1;
+          const rawRate = Number(row.rate);
+          const ratePerUnit = Number(row.rate_per_unit ?? (rawRate / units));
+          if (!Number.isFinite(ratePerUnit)) return acc;
+          acc[row.cc] = {
+            ...row,
+            cc: row.cc,
+            txt: row.txt || METAL_LABELS[row.cc] || row.enname || row.cc,
+            rate: rawRate,
+            units,
+            ratePerUnit,
+            exchangedate: row.exchangedate || null
+          };
+          return acc;
+        }, {});
+      }
+
+      function createUAHRow(displayDate) {
+        return {
+          cc: 'UAH',
+          txt: 'Українська гривня',
+          enname: 'Ukrainian Hryvnia',
+          rate: 1,
+          ratePerUnit: 1,
+          units: 1,
+          exchangedate: displayDate
+        };
+      }
+
+      function pickOfficialDate(map) {
+        const any = Object.values(map).find((row) => row.exchangedate);
+        return any?.exchangedate || null;
+      }
+
+      function renderSkeletonCards() {
+        const cards = [];
+        for (let i = 0; i < 7; i += 1) {
+          cards.push(`
+            <article class="skeleton-card" aria-hidden="true">
+              <div class="skeleton-row">
+                <div class="skeleton-line" style="width:96px;"></div>
+                <div class="skeleton-line" style="width:34px; height:34px; border-radius:12px;"></div>
+              </div>
+              <div class="skeleton-row" style="align-items:flex-end;">
+                <div style="display:grid; gap:10px; width:58%;">
+                  <div class="skeleton-line" style="height:34px; width:100%; border-radius:16px;"></div>
+                  <div class="skeleton-line" style="width:82%;"></div>
+                </div>
+                <div style="display:grid; gap:10px; width:112px; justify-items:end;">
+                  <div class="skeleton-chip" style="width:100%;"></div>
+                  <div class="skeleton-line" style="width:72px;"></div>
+                </div>
+              </div>
+            </article>
+          `);
+        }
+        return cards.join('');
+      }
+
+      function installSheetDrag(sheetEl, grabEl, onClose, options = {}) {
+        const direction = options.direction === 'up' ? 'up' : 'down';
+        const headerEl = sheetEl.querySelector('.sheet-header');
+        const scrollEl = sheetEl.querySelector('.sheet-scroll');
+        const dragStartEl = sheetEl;
+        const interactiveSelector = 'button, input, select, textarea, a, [role="button"], label, svg, canvas';
+        let startY = 0;
+        let currentY = 0;
+        let dragging = false;
+        let pointerId = null;
+        let moved = false;
+        let suppressHeaderClick = false;
+        let activeTouchId = null;
+
+        const canStartDragFromTarget = (target) => {
+          if (!target || target.closest(interactiveSelector)) return false;
+          if (scrollEl && target.closest('.sheet-scroll') && scrollEl.scrollTop > 0) return false;
+          return true;
+        };
+
+        const beginDrag = (clientY) => {
+          dragging = true;
+          moved = false;
+          startY = clientY;
+          currentY = 0;
+          sheetEl.classList.add('is-dragging');
+        };
+
+        const updateDrag = (clientY) => {
+          if (!dragging) return;
+          const deltaY = clientY - startY;
+          currentY = direction === 'up' ? Math.min(0, deltaY) : Math.max(0, deltaY);
+          moved = moved || Math.abs(deltaY) > 6;
+          sheetEl.style.transform = `translateY(${currentY}px)`;
+        };
+
+        const endDrag = () => {
+          if (!dragging) return;
+          dragging = false;
+          sheetEl.classList.remove('is-dragging');
+          const shouldClose = direction === 'up' ? currentY < -96 : currentY > 96;
+          suppressHeaderClick = moved;
+          sheetEl.style.transform = '';
+          if (shouldClose) onClose();
+          currentY = 0;
+          pointerId = null;
+          activeTouchId = null;
+          moved = false;
+        };
+
+        const onPointerDown = (event) => {
+          if (event.pointerType === 'mouse' && event.button !== 0) return;
+          if (!canStartDragFromTarget(event.target)) return;
+          pointerId = event.pointerId;
+          beginDrag(event.clientY);
+          if (dragStartEl.setPointerCapture && pointerId != null) {
+            try { dragStartEl.setPointerCapture(pointerId); } catch {}
+          }
+        };
+
+        const onPointerMove = (event) => {
+          if (!dragging) return;
+          if (pointerId != null && event.pointerId !== pointerId) return;
+          updateDrag(event.clientY);
+        };
+
+        const onPointerUp = (event) => {
+          if (!dragging) return;
+          if (pointerId != null && event && event.pointerId !== undefined && event.pointerId !== pointerId) return;
+          endDrag();
+        };
+
+        const onTouchStart = (event) => {
+          if (!canStartDragFromTarget(event.target)) return;
+          const touch = event.changedTouches && event.changedTouches[0];
+          if (!touch) return;
+          activeTouchId = touch.identifier;
+          beginDrag(touch.clientY);
+          event.preventDefault();
+        };
+
+        const onTouchMove = (event) => {
+          if (!dragging || activeTouchId == null) return;
+          const touch = Array.from(event.changedTouches || []).find((item) => item.identifier === activeTouchId)
+            || Array.from(event.touches || []).find((item) => item.identifier === activeTouchId);
+          if (!touch) return;
+          updateDrag(touch.clientY);
+          event.preventDefault();
+        };
+
+        const onTouchEnd = (event) => {
+          if (!dragging || activeTouchId == null) return;
+          const touch = Array.from(event.changedTouches || []).find((item) => item.identifier === activeTouchId);
+          if (!touch) return;
+          endDrag();
+        };
+
+        const onHeaderClick = (event) => {
+          if (event.target.closest('button')) return;
+          if (dragging || suppressHeaderClick) {
+            suppressHeaderClick = false;
+            return;
+          }
+          onClose();
+        };
+
+        dragStartEl.addEventListener('pointerdown', onPointerDown);
+        dragStartEl.addEventListener('touchstart', onTouchStart, { passive: false });
+        dragStartEl.addEventListener('touchmove', onTouchMove, { passive: false });
+        dragStartEl.addEventListener('touchend', onTouchEnd, { passive: false });
+        dragStartEl.addEventListener('touchcancel', onTouchEnd, { passive: false });
+        if (headerEl) headerEl.addEventListener('click', onHeaderClick);
+        window.addEventListener('pointermove', onPointerMove, { passive: true });
+        window.addEventListener('pointerup', onPointerUp, { passive: true });
+        window.addEventListener('pointercancel', onPointerUp, { passive: true });
+      }
+
+      function focusAmountInputSoon() {
+        setTimeout(() => {
+          const input = document.getElementById('converterAmountInput');
+          if (!input || state.activeOverlay !== 'converter' || state.converter.pickerTarget) return;
+          input.focus({ preventScroll: true });
+          try { input.setSelectionRange(input.value.length, input.value.length); } catch {}
+        }, 260);
+      }
+
+      function focusConverterSearchSoon() {
+        setTimeout(() => {
+          const input = document.getElementById('converterSearch');
+          if (!input || state.activeOverlay !== 'converter' || !state.converter.pickerTarget) return;
+          input.focus({ preventScroll: true });
+        }, 60);
+      }
+
+      function parseInputNumber(value) {
+        const normalized = String(value || '').replace(/\s/g, '').replace(',', '.');
+        if (!normalized) return NaN;
+        return Number(normalized);
+      }
+
+      function getCurrentViewRateDigits() {
+        return state.viewMode === 'metals' ? 2 : 4;
+      }
+
+      function formatRate(value, digits = 4) {
+        if (!Number.isFinite(value)) return '—';
+        return new Intl.NumberFormat('uk-UA', {
+          minimumFractionDigits: digits,
+          maximumFractionDigits: digits
+        }).format(value);
+      }
+
+      function formatAmount(value) {
+        if (!Number.isFinite(value)) return '—';
+        const abs = Math.abs(value);
+        const maxDigits = abs >= 100 ? 2 : abs >= 10 ? 3 : abs >= 1 ? 4 : 6;
+        return new Intl.NumberFormat('uk-UA', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: maxDigits
+        }).format(value);
+      }
+
+      function smallNumber(value) {
+        if (!Number.isFinite(value)) return '—';
+        return new Intl.NumberFormat('uk-UA', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2
+        }).format(value);
+      }
+
+      function formatSignedPercent(value) {
+        if (!Number.isFinite(value)) return 'Н/Д';
+        const prefix = value > 0 ? '+' : value < 0 ? '−' : '';
+        return `${prefix}${Math.abs(value).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+      }
+
+      function formatSignedNumber(value) {
+        if (!Number.isFinite(value)) return 'Н/Д';
+        const prefix = value > 0 ? '+' : value < 0 ? '−' : '';
+        return `${prefix}${formatRate(Math.abs(value))}`;
+      }
+
+      function formatTime(date) {
+        return new Intl.DateTimeFormat('uk-UA', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(date);
+      }
+
+      function formatAxisDateLabel(isoDate) {
+        const date = new Date(`${isoDate}T00:00:00`);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        return `${day}.${month}`;
+      }
+
+      function formatDisplayDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+      }
+
+      function formatApiDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${year}${month}${day}`;
+      }
+
+      function parseDisplayDateParts(value) {
+        const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(value || '');
+        if (!match) return null;
+        const [, day, month, year] = match;
+        return {
+          day: Number(day),
+          month: Number(month),
+          year: Number(year)
+        };
+      }
+
+      function parseDisplayDate(value) {
+        const parts = parseDisplayDateParts(value);
+        if (!parts) return null;
+        return new Date(parts.year, parts.month - 1, parts.day);
+      }
+
+      function toIsoDate(displayDate) {
+        const parts = parseDisplayDateParts(displayDate);
+        if (!parts) return null;
+        return `${String(parts.year).padStart(4, '0')}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
+      }
+
+      function readLS(key, fallback) {
+        try {
+          const value = localStorage.getItem(key);
+          return value === null ? fallback : value;
+        } catch {
+          return fallback;
+        }
+      }
+
+      function normalizeConverterAmount(value) {
+        const normalized = String(value ?? '').trim();
+        if (normalized === '100') return '';
+        return normalized;
+      }
+
+      function writeLS(key, value) {
+        try {
+          localStorage.setItem(key, String(value));
+        } catch {}
+      }
+
+      function persistConverterPrefs() {
+        writeLS(STORAGE_KEYS.converterFrom, state.converter.from);
+        writeLS(STORAGE_KEYS.converterTo, state.converter.to);
+        writeLS(STORAGE_KEYS.converterAmount, state.converter.amount);
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value);
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+    })();
+  </script>
+</body>
+</html>
