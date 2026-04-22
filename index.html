@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#08111f" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="FX Converter" />
   <link rel="manifest" href="./manifest.webmanifest" />
@@ -1484,6 +1483,7 @@
         },
         install: {
           deferredPrompt: null,
+          available: false,
           installed: isRunningAsInstalledApp(),
           beforeInstallPromptSupported: 'onbeforeinstallprompt' in window,
           iosSafari: isIosSafari()
@@ -1508,7 +1508,7 @@
         renderBaseSheet();
         renderDetailBody();
         renderConverterBody();
-        updateInstallUi();
+        syncInstallButton();
         loadCurrentRates();
       }
 
@@ -1660,22 +1660,26 @@
           console.log('[PWA install] beforeinstallprompt fired');
           event.preventDefault();
           state.install.deferredPrompt = event;
-          console.log('[PWA install] deferredPrompt stored', {
+          state.install.available = !state.install.installed;
+          console.log('[PWA install] deferredPrompt set', {
             hasDeferredPrompt: Boolean(state.install.deferredPrompt),
+            available: state.install.available,
             installed: state.install.installed
           });
-          updateInstallUi();
+          syncInstallButton();
         });
 
         window.addEventListener('appinstalled', () => {
           console.log('[PWA install] appinstalled fired');
           state.install.installed = true;
+          state.install.available = false;
           state.install.deferredPrompt = null;
           console.log('[PWA install] install state updated after appinstalled', {
             installed: state.install.installed,
+            available: state.install.available,
             hasDeferredPrompt: Boolean(state.install.deferredPrompt)
           });
-          updateInstallUi();
+          syncInstallButton();
         });
 
         const standaloneMql = window.matchMedia ? window.matchMedia('(display-mode: standalone)') : null;
@@ -1686,15 +1690,16 @@
             installed: state.install.installed
           });
           if (state.install.installed) {
+            state.install.available = false;
             state.install.deferredPrompt = null;
           }
-          updateInstallUi();
+          syncInstallButton();
         });
       }
 
-      function updateInstallUi() {
+      function syncInstallButton() {
         const hasDeferredPrompt = Boolean(state.install.deferredPrompt);
-        const shouldShowInstallButton = !state.install.installed && hasDeferredPrompt;
+        const shouldShowInstallButton = state.install.available && !state.install.installed && hasDeferredPrompt;
         const shouldShowIosHint = !state.install.installed && !hasDeferredPrompt && state.install.iosSafari;
         const shouldShowGenericHint = !state.install.installed
           && !hasDeferredPrompt
@@ -1712,9 +1717,9 @@
           refs.installHint.textContent = '';
         }
 
-        console.log(`[PWA install] install button ${shouldShowInstallButton ? 'shown' : 'hidden'}`);
-        console.log('[PWA install] updateInstallUi', {
+        console.log('[PWA install] syncInstallButton', {
           installed: state.install.installed,
+          available: state.install.available,
           hasDeferredPrompt,
           shouldShowInstallButton,
           shouldShowIosHint,
@@ -1728,28 +1733,22 @@
           hasDeferredPrompt: Boolean(promptEvent),
           installed: state.install.installed
         });
+        if (!promptEvent || state.install.installed) return;
 
-        if (!promptEvent || state.install.installed) {
-          console.log('[PWA install] no deferredPrompt available on button click');
-          return;
-        }
-
-        console.log('[PWA install] prompt() called');
+        console.log('[PWA install] calling deferredPrompt.prompt()');
         promptEvent.prompt();
 
         try {
           const choiceResult = await promptEvent.userChoice;
-          console.log('[PWA install] userChoice result', choiceResult);
-          if (choiceResult?.outcome === 'accepted') {
-            state.install.installed = true;
-          }
+          console.log('[PWA install] userChoice resolved', choiceResult);
         } finally {
+          state.install.available = false;
           state.install.deferredPrompt = null;
-          console.log('[PWA install] deferredPrompt cleared after prompt', {
-            installed: state.install.installed,
+          console.log('[PWA install] prompt consumed, clearing deferredPrompt', {
+            available: state.install.available,
             hasDeferredPrompt: Boolean(state.install.deferredPrompt)
           });
-          updateInstallUi();
+          syncInstallButton();
         }
       }
 
@@ -3198,13 +3197,9 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .then((registration) => {
-            console.log('[PWA] Service worker registration success', registration.scope);
-          })
-          .catch((error) => {
-            console.error('[PWA] Service worker registration failed', error);
-          });
+        navigator.serviceWorker.register('./sw.js', { scope: './' }).catch((error) => {
+          console.error('Service worker registration failed:', error);
+        });
       });
     }
   </script>
