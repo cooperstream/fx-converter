@@ -1,5 +1,5 @@
-const CACHE_NAME = 'fx-converter-shell-v4';
-const APP_SHELL = [
+const CACHE_NAME = 'fx-converter-static-v3';
+const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
@@ -11,7 +11,7 @@ const APP_SHELL = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
+      .then((cache) => cache.addAll(STATIC_ASSETS))
       .then(() => self.skipWaiting())
   );
 });
@@ -40,15 +40,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match('./index.html'))
+      fetch(request).catch(() => caches.match('./index.html'))
     );
     return;
   }
