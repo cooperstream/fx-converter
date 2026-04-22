@@ -101,9 +101,20 @@
 
     .header-top {
       display: flex;
-      align-items: flex-start;
-      justify-content: flex-start;
-      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .header-title {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      font-weight: 800;
+      white-space: nowrap;
+      flex: 0 1 auto;
       min-width: 0;
     }
 
@@ -119,7 +130,6 @@
       border: 1px solid rgba(154, 171, 193, 0.14);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
       min-height: 38px;
-      flex: 1 1 auto;
       min-width: 0;
     }
 
@@ -148,17 +158,20 @@
       color: var(--muted-2);
       font-size: 12px;
       line-height: 1.35;
-      min-height: 16px;
+      min-height: 18px;
       white-space: nowrap;
-      text-align: right;
-      flex: 0 1 auto;
+      text-align: left;
+      flex: 1 1 auto;
       letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .header-actions {
       display: flex;
-      align-items: stretch;
-      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
       flex: 0 0 auto;
     }
 
@@ -234,20 +247,11 @@
       white-space: nowrap;
     }
 
-    .converter-btn {
-      color: var(--text);
-      border-color: rgba(154, 171, 193, 0.2);
-      background: rgba(255, 255, 255, 0.05);
-      width: 38px;
-      min-width: 38px;
-      padding: 0;
-    }
-
     .header-info {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content: flex-start;
+      gap: 8px;
       min-width: 0;
     }
 
@@ -258,23 +262,6 @@
       background: linear-gradient(180deg, rgba(11, 21, 36, 0.9), rgba(11, 21, 36, 0.7));
       border-bottom: 1px solid rgba(154, 171, 193, 0.08);
       z-index: 2;
-    }
-
-    .base-context {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.35;
-      white-space: nowrap;
-      flex: 1 1 auto;
-    }
-
-    .base-context strong {
-      color: var(--text);
-      font-weight: 700;
     }
 
     .chips-row {
@@ -1267,13 +1254,18 @@
     @media (max-width: 480px) {
       .app-header { gap: 8px; }
       .header-actions { gap: 6px; }
-      .action-btn { padding-inline: 10px; font-size: 12px; }
+      .action-btn { min-height: 36px; padding-inline: 10px; font-size: 12px; }
       .mode-btn { padding-inline: 10px; font-size: 12px; }
       .header-meta { font-size: 11px; }
+      .header-title { font-size: 20px; }
     }
 
     @media (max-width: 390px) {
       .app-header { padding-inline: 16px; }
+      .header-top { gap: 8px; }
+      .header-actions { gap: 4px; }
+      .action-btn { padding-inline: 8px; font-size: 11px; min-height: 34px; }
+      .header-title { font-size: 18px; }
       .base-strip { padding-inline: 16px; }
       .content-area { padding-inline: 16px; }
       .sheet-header { padding-inline: 16px; }
@@ -1293,34 +1285,19 @@
   <div class="app-shell" id="appShell">
     <header class="app-header">
       <div class="header-top">
-        <div class="mode-toggle" id="viewModeToggle" role="tablist" aria-label="Режим перегляду">
-          <button class="mode-btn active" type="button" data-view-mode="currencies" role="tab" aria-selected="true">Валюти</button>
-          <button class="mode-btn" type="button" data-view-mode="metals" role="tab" aria-selected="false">Метали</button>
-        </div>
+        <h1 class="header-title">Курси НБУ</h1>
         <div class="header-actions">
-          <button class="icon-btn" id="refreshBtn" type="button" aria-label="Оновити курси">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M20 5V10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M4 19V14H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M6.9 9C7.4 7.58 8.4 6.39 9.72 5.65C11.04 4.91 12.58 4.68 14.05 5.01C15.52 5.35 16.82 6.22 17.72 7.45L20 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M17.1 15C16.6 16.42 15.6 17.61 14.28 18.35C12.96 19.09 11.42 19.32 9.95 18.99C8.48 18.65 7.18 17.78 6.28 16.55L4 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
           <button class="action-btn install-btn" id="installAppBtn" type="button" hidden>Встановити</button>
-          <button class="action-btn converter-btn" id="openConverterBtn" type="button" aria-label="Відкрити конвертер">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M4 8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M16 4L20 8L16 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M20 16H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M8 12L4 16L8 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <button class="action-btn" id="refreshBtn" type="button" aria-label="Оновити курси">Оновити</button>
+          <button class="action-btn" id="openConverterBtn" type="button" aria-label="Відкрити конвертер">Конвертер</button>
         </div>
       </div>
-      <h1 class="a11y-hidden">Курси та метали НБУ</h1>
       <div class="header-info">
-        <div class="base-context" id="baseContext">Курси відносно <strong>UAH</strong></div>
         <p class="header-meta" id="headerMeta">Завантаження даних…</p>
+      </div>
+      <div class="mode-toggle" id="viewModeToggle" role="tablist" aria-label="Режим перегляду">
+        <button class="mode-btn active" type="button" data-view-mode="currencies" role="tab" aria-selected="true">Валюти</button>
+        <button class="mode-btn" type="button" data-view-mode="metals" role="tab" aria-selected="false">Метали</button>
       </div>
     </header>
 
@@ -1428,7 +1405,6 @@
 
       const refs = {
         headerMeta: document.getElementById('headerMeta'),
-        baseContext: document.getElementById('baseContext'),
         baseChips: document.getElementById('baseChips'),
         cardsList: document.getElementById('cardsList'),
         refreshBtn: document.getElementById('refreshBtn'),
@@ -1900,7 +1876,7 @@
 
       function renderHeaderMeta() {
         if (state.loading && !state.currentRates) {
-          refs.headerMeta.textContent = 'Оновлення даних…';
+          refs.headerMeta.textContent = 'Дані на: — • оновлено о —';
           return;
         }
         if (state.error && !state.currentRates) {
@@ -1908,10 +1884,8 @@
           return;
         }
         const synced = state.fetchedAt ? formatTime(state.fetchedAt) : '—';
-        const official = state.officialDate ? state.officialDate : 'дата НБУ недоступна';
-        const suffix = state.refreshing ? ' · оновлення…' : '';
-        refs.headerMeta.textContent = `Оновлено ${synced} · курс ${official}${suffix}`;
-        refs.baseContext.innerHTML = `Курси відносно <strong>${escapeHtml(state.baseCurrency)}</strong>`;
+        const official = state.officialDate || '—';
+        refs.headerMeta.textContent = `Дані на: ${official} • оновлено о ${synced}${state.refreshing ? ' • оновлення…' : ''}`;
       }
 
       function renderViewToggle() {
