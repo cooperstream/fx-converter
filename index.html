@@ -102,7 +102,7 @@
     .header-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       gap: 12px;
       min-width: 0;
     }
@@ -179,7 +179,8 @@
       align-items: center;
       justify-content: flex-end;
       gap: 8px;
-      align-self: center;
+      align-self: flex-start;
+      margin-top: 3px;
     }
 
     .install-btn {
@@ -1447,7 +1448,8 @@
         converterFrom: 'nbu.fx.converter.from',
         converterTo: 'nbu.fx.converter.to',
         converterAmount: 'nbu.fx.converter.amount',
-        viewMode: 'nbu.fx.view.mode'
+        viewMode: 'nbu.fx.view.mode',
+        installed: 'nbu.fx.installed'
       };
 
       const refs = {
@@ -1508,7 +1510,7 @@
         install: {
           deferredPrompt: null,
           available: false,
-          installed: isRunningAsInstalledApp(),
+          installed: isRunningAsInstalledApp() || readLS(STORAGE_KEYS.installed, '') === '1',
           secureContext: window.isSecureContext === true
         }
       };
@@ -1516,6 +1518,12 @@
       init();
 
       function init() {
+        const runningAsInstalled = isRunningAsInstalledApp();
+        if (runningAsInstalled || state.install.installed) {
+          state.install.installed = true;
+          writeLS(STORAGE_KEYS.installed, '1');
+        }
+
         bindStaticEvents();
         installSheetDrag(refs.baseSheet, document.getElementById('baseGrab'), closeBaseSheet);
         installSheetDrag(refs.detailSheet, document.getElementById('detailGrab'), closeDetailSheet, { direction: 'down' });
@@ -1676,8 +1684,18 @@
 
         window.addEventListener('beforeinstallprompt', (event) => {
           event.preventDefault();
+          const treatedAsInstalled = state.install.installed || isRunningAsInstalledApp() || readLS(STORAGE_KEYS.installed, '') === '1';
+          if (treatedAsInstalled) {
+            state.install.installed = true;
+            state.install.available = false;
+            state.install.deferredPrompt = null;
+            writeLS(STORAGE_KEYS.installed, '1');
+            syncInstallButton();
+            return;
+          }
+
           state.install.deferredPrompt = event;
-          state.install.available = !state.install.installed;
+          state.install.available = true;
           syncInstallButton();
         });
 
@@ -1685,18 +1703,25 @@
           state.install.installed = true;
           state.install.available = false;
           state.install.deferredPrompt = null;
+          writeLS(STORAGE_KEYS.installed, '1');
           syncInstallButton();
         });
       }
 
       function syncInstallButton() {
+        const treatedAsInstalled = state.install.installed || isRunningAsInstalledApp() || readLS(STORAGE_KEYS.installed, '') === '1';
+        if (treatedAsInstalled) {
+          state.install.installed = true;
+          writeLS(STORAGE_KEYS.installed, '1');
+        }
+
         const shouldShow = state.install.available && !state.install.installed && Boolean(state.install.deferredPrompt);
         refs.installAppBtn.hidden = !shouldShow;
       }
 
       async function onInstallButtonClick() {
         const promptEvent = state.install.deferredPrompt;
-        if (!promptEvent || state.install.installed) return;
+        if (!promptEvent || state.install.installed || isRunningAsInstalledApp()) return;
 
         promptEvent.prompt();
 
