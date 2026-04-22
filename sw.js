@@ -1,12 +1,20 @@
-const CACHE_NAME = 'fx-converter-static-v3';
+const CACHE_NAME = 'fx-converter-static-v4';
+const LEGACY_CACHE_KEYS = [
+  'fx-converter-static-v1',
+  'fx-converter-static-v2',
+  'fx-converter-static-v3'
+];
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png'
 ];
+
+function isManifestRequest(request, url) {
+  return request.destination === 'manifest' || url.pathname.endsWith('/manifest.webmanifest') || url.pathname === '/manifest.webmanifest';
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -24,7 +32,8 @@ self.addEventListener('activate', (event) => {
           .filter((key) => key !== CACHE_NAME)
           .map((key) => caches.delete(key))
       )
-    ).then(() => self.clients.claim())
+    ).then(() => Promise.all(LEGACY_CACHE_KEYS.map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
   );
 });
 
@@ -37,6 +46,11 @@ self.addEventListener('fetch', (event) => {
 
   // Do not intercept external API requests (e.g. NBU endpoints).
   if (url.origin !== self.location.origin) return;
+
+  if (isManifestRequest(request, url)) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   if (request.mode === 'navigate') {
     event.respondWith(
