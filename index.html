@@ -90,9 +90,9 @@
 
     .app-header {
       flex: 0 0 auto;
-      padding: calc(var(--header-safe) + 4px) 18px 8px;
+      padding: calc(var(--header-safe) + 6px) 18px 10px;
       display: grid;
-      gap: 8px;
+      gap: 10px;
       background: linear-gradient(180deg, rgba(14, 23, 39, 0.96), rgba(14, 23, 39, 0.88));
       backdrop-filter: blur(18px);
       border-bottom: 1px solid rgba(154, 171, 193, 0.12);
@@ -100,21 +100,26 @@
     }
 
     .header-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 12px;
       min-width: 0;
+    }
+
+    .header-title-block {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
     }
 
     .header-title {
       margin: 0;
-      font-size: 22px;
+      font-size: 24px;
       line-height: 1.1;
       letter-spacing: -0.03em;
-      font-weight: 800;
+      font-weight: 820;
       white-space: nowrap;
-      flex: 0 1 auto;
       min-width: 0;
     }
 
@@ -157,11 +162,10 @@
       margin: 0;
       color: var(--muted-2);
       font-size: 12px;
-      line-height: 1.35;
-      min-height: 18px;
+      line-height: 1.4;
+      min-height: 17px;
       white-space: nowrap;
       text-align: left;
-      flex: 1 1 auto;
       letter-spacing: -0.01em;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -171,8 +175,10 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 6px;
+      gap: 5px;
       flex: 0 0 auto;
+      flex-wrap: wrap;
+      align-self: start;
     }
 
     .install-btn {
@@ -235,24 +241,16 @@
 
     .action-btn {
       min-height: 38px;
-      padding: 0 12px;
+      padding: 0 10px;
       border-radius: 13px;
       background: rgba(255, 255, 255, 0.035);
       border: 1px solid rgba(154, 171, 193, 0.14);
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 650;
       letter-spacing: -0.01em;
       box-shadow: none;
       white-space: nowrap;
-    }
-
-    .header-info {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 8px;
-      min-width: 0;
     }
 
     .base-strip {
@@ -1252,19 +1250,20 @@
     }
 
     @media (max-width: 480px) {
-      .app-header { gap: 8px; }
-      .header-actions { gap: 6px; }
-      .action-btn { min-height: 36px; padding-inline: 10px; font-size: 12px; }
+      .app-header { gap: 9px; padding-bottom: 9px; }
+      .header-top { gap: 10px; }
+      .header-actions { gap: 4px; }
+      .action-btn { min-height: 36px; padding-inline: 9px; font-size: 11px; }
       .mode-btn { padding-inline: 10px; font-size: 12px; }
       .header-meta { font-size: 11px; }
-      .header-title { font-size: 20px; }
+      .header-title { font-size: 21px; }
     }
 
     @media (max-width: 390px) {
       .app-header { padding-inline: 16px; }
       .header-top { gap: 8px; }
       .header-actions { gap: 4px; }
-      .action-btn { padding-inline: 8px; font-size: 11px; min-height: 34px; }
+      .action-btn { padding-inline: 8px; font-size: 11px; min-height: 34px; border-radius: 11px; }
       .header-title { font-size: 18px; }
       .base-strip { padding-inline: 16px; }
       .content-area { padding-inline: 16px; }
@@ -1279,21 +1278,26 @@
       .metric-label { font-size: 10px; }
       .metric-value { font-size: 14px; }
     }
+
+    @media (max-width: 360px) {
+      .header-top { grid-template-columns: minmax(0, 1fr); }
+      .header-actions { justify-content: flex-start; }
+    }
   </style>
 </head>
 <body>
   <div class="app-shell" id="appShell">
     <header class="app-header">
       <div class="header-top">
-        <h1 class="header-title">Курси НБУ</h1>
+        <div class="header-title-block">
+          <h1 class="header-title">Курси НБУ</h1>
+          <p class="header-meta" id="headerMeta">Завантаження даних…</p>
+        </div>
         <div class="header-actions">
           <button class="action-btn install-btn" id="installAppBtn" type="button" hidden>Встановити</button>
           <button class="action-btn" id="refreshBtn" type="button" aria-label="Оновити курси">Оновити</button>
           <button class="action-btn" id="openConverterBtn" type="button" aria-label="Відкрити конвертер">Конвертер</button>
         </div>
-      </div>
-      <div class="header-info">
-        <p class="header-meta" id="headerMeta">Завантаження даних…</p>
       </div>
       <div class="mode-toggle" id="viewModeToggle" role="tablist" aria-label="Режим перегляду">
         <button class="mode-btn active" type="button" data-view-mode="currencies" role="tab" aria-selected="true">Валюти</button>
