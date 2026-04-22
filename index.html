@@ -194,15 +194,6 @@
       background: rgba(255, 255, 255, 0.06);
     }
 
-    .install-hint {
-      max-width: 210px;
-      margin: 0;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.3;
-      letter-spacing: -0.01em;
-    }
-
     .icon-btn,
     .action-btn,
     .ghost-btn,
@@ -1316,7 +1307,6 @@
           </svg>
         </button>
         <button class="action-btn install-btn" id="installAppBtn" type="button" hidden>Встановити</button>
-        <p class="install-hint" id="installHint" hidden></p>
         <button class="action-btn" id="openConverterBtn" type="button">Конвертер</button>
       </div>
     </header>
@@ -1431,7 +1421,6 @@
         cardsList: document.getElementById('cardsList'),
         refreshBtn: document.getElementById('refreshBtn'),
         installAppBtn: document.getElementById('installAppBtn'),
-        installHint: document.getElementById('installHint'),
         openConverterBtn: document.getElementById('openConverterBtn'),
         viewModeToggle: document.getElementById('viewModeToggle'),
         baseOverlay: document.getElementById('baseOverlay'),
@@ -1484,20 +1473,13 @@
         install: {
           deferredPrompt: null,
           available: false,
-          installed: isRunningAsInstalledApp(),
-          beforeInstallPromptSupported: 'onbeforeinstallprompt' in window,
-          iosSafari: isIosSafari()
+          installed: isRunningAsInstalledApp()
         }
       };
 
       init();
 
       function init() {
-        console.log('[PWA install] init', {
-          installed: state.install.installed,
-          beforeInstallPromptSupported: state.install.beforeInstallPromptSupported,
-          iosSafari: state.install.iosSafari
-        });
         bindStaticEvents();
         installSheetDrag(refs.baseSheet, document.getElementById('baseGrab'), closeBaseSheet);
         installSheetDrag(refs.detailSheet, document.getElementById('detailGrab'), closeDetailSheet, { direction: 'down' });
@@ -1657,97 +1639,36 @@
         });
 
         window.addEventListener('beforeinstallprompt', (event) => {
-          console.log('[PWA install] beforeinstallprompt fired');
           event.preventDefault();
           state.install.deferredPrompt = event;
           state.install.available = !state.install.installed;
-          console.log('[PWA install] deferredPrompt set', {
-            hasDeferredPrompt: Boolean(state.install.deferredPrompt),
-            available: state.install.available,
-            installed: state.install.installed
-          });
           syncInstallButton();
         });
 
         window.addEventListener('appinstalled', () => {
-          console.log('[PWA install] appinstalled fired');
           state.install.installed = true;
           state.install.available = false;
           state.install.deferredPrompt = null;
-          console.log('[PWA install] install state updated after appinstalled', {
-            installed: state.install.installed,
-            available: state.install.available,
-            hasDeferredPrompt: Boolean(state.install.deferredPrompt)
-          });
-          syncInstallButton();
-        });
-
-        const standaloneMql = window.matchMedia ? window.matchMedia('(display-mode: standalone)') : null;
-        standaloneMql?.addEventListener?.('change', (event) => {
-          state.install.installed = event.matches || window.navigator.standalone === true;
-          console.log('[PWA install] display-mode changed', {
-            matchesStandalone: event.matches,
-            installed: state.install.installed
-          });
-          if (state.install.installed) {
-            state.install.available = false;
-            state.install.deferredPrompt = null;
-          }
           syncInstallButton();
         });
       }
 
       function syncInstallButton() {
-        const hasDeferredPrompt = Boolean(state.install.deferredPrompt);
-        const shouldShowInstallButton = state.install.available && !state.install.installed && hasDeferredPrompt;
-        const shouldShowIosHint = !state.install.installed && !hasDeferredPrompt && state.install.iosSafari;
-        const shouldShowGenericHint = !state.install.installed
-          && !hasDeferredPrompt
-          && !state.install.beforeInstallPromptSupported
-          && !state.install.iosSafari;
-
-        refs.installAppBtn.hidden = !shouldShowInstallButton;
-        refs.installHint.hidden = !(shouldShowIosHint || shouldShowGenericHint);
-
-        if (shouldShowIosHint) {
-          refs.installHint.textContent = 'Щоб встановити додаток, відкрий Share і вибери Add to Home Screen.';
-        } else if (shouldShowGenericHint) {
-          refs.installHint.textContent = 'Встановлення з браузера недоступне на цьому пристрої.';
-        } else {
-          refs.installHint.textContent = '';
-        }
-
-        console.log('[PWA install] syncInstallButton', {
-          installed: state.install.installed,
-          available: state.install.available,
-          hasDeferredPrompt,
-          shouldShowInstallButton,
-          shouldShowIosHint,
-          shouldShowGenericHint
-        });
+        const shouldShow = state.install.available && !state.install.installed && Boolean(state.install.deferredPrompt);
+        refs.installAppBtn.hidden = !shouldShow;
       }
 
       async function onInstallButtonClick() {
         const promptEvent = state.install.deferredPrompt;
-        console.log('[PWA install] install button clicked', {
-          hasDeferredPrompt: Boolean(promptEvent),
-          installed: state.install.installed
-        });
         if (!promptEvent || state.install.installed) return;
 
-        console.log('[PWA install] calling deferredPrompt.prompt()');
         promptEvent.prompt();
 
         try {
-          const choiceResult = await promptEvent.userChoice;
-          console.log('[PWA install] userChoice resolved', choiceResult);
+          await promptEvent.userChoice;
         } finally {
           state.install.available = false;
           state.install.deferredPrompt = null;
-          console.log('[PWA install] prompt consumed, clearing deferredPrompt', {
-            available: state.install.available,
-            hasDeferredPrompt: Boolean(state.install.deferredPrompt)
-          });
           syncInstallButton();
         }
       }
@@ -1756,16 +1677,6 @@
         const standaloneMedia = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
         const iosStandalone = window.navigator.standalone === true;
         return standaloneMedia || iosStandalone;
-      }
-
-      function isIosSafari() {
-        const ua = window.navigator.userAgent || '';
-        const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const isWebKit = /WebKit/i.test(ua);
-        const isCriOS = /CriOS/i.test(ua);
-        const isFxiOS = /FxiOS/i.test(ua);
-        const isEdgiOS = /EdgiOS/i.test(ua);
-        return isIOS && isWebKit && !isCriOS && !isFxiOS && !isEdgiOS;
       }
 
       async function loadCurrentRates(isManual = false) {
