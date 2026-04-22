@@ -90,9 +90,9 @@
 
     .app-header {
       flex: 0 0 auto;
-      padding: calc(var(--header-safe) + 4px) 18px 10px;
+      padding: calc(var(--header-safe) + 4px) 18px 8px;
       display: grid;
-      gap: 10px;
+      gap: 8px;
       background: linear-gradient(180deg, rgba(14, 23, 39, 0.96), rgba(14, 23, 39, 0.88));
       backdrop-filter: blur(18px);
       border-bottom: 1px solid rgba(154, 171, 193, 0.12);
@@ -101,57 +101,39 @@
 
     .header-top {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 8px;
       min-width: 0;
-    }
-
-    .brand-block {
-      min-width: 0;
-      display: grid;
-      gap: 6px;
-    }
-
-    .brand-kicker {
-      display: inline-flex;
-      align-items: center;
-      width: fit-content;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.045);
-      color: var(--muted-2);
-      font-size: 10px;
-      line-height: 1;
-      font-weight: 650;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      border: 1px solid rgba(154, 171, 193, 0.12);
     }
 
     .mode-toggle {
-      width: fit-content;
-      max-width: 100%;
+      width: auto;
+      max-width: none;
       display: inline-grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 4px;
-      padding: 4px;
-      border-radius: 18px;
+      gap: 2px;
+      padding: 2px;
+      border-radius: 13px;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(154, 171, 193, 0.14);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+      min-height: 38px;
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     .mode-btn {
-      min-width: 88px;
-      min-height: 40px;
-      padding: 0 14px;
-      border-radius: 14px;
+      min-width: 0;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 10px;
       color: var(--muted);
       font-weight: 700;
       letter-spacing: -0.01em;
       background: transparent;
       border: 1px solid transparent;
+      white-space: nowrap;
     }
 
     .mode-btn.active {
@@ -164,25 +146,20 @@
     .header-meta {
       margin: 0;
       color: var(--muted-2);
-      font-size: 11px;
-      line-height: 1.2;
-      min-height: 14px;
+      font-size: 12px;
+      line-height: 1.35;
+      min-height: 16px;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      text-align: right;
+      flex: 0 1 auto;
       letter-spacing: -0.01em;
     }
 
     .header-actions {
       display: flex;
-      align-items: center;
+      align-items: stretch;
       gap: 8px;
       flex: 0 0 auto;
-    }
-
-
-    .header-actions > .action-btn {
-      white-space: nowrap;
     }
 
     .install-btn {
@@ -254,6 +231,7 @@
       font-weight: 650;
       letter-spacing: -0.01em;
       box-shadow: none;
+      white-space: nowrap;
     }
 
     .converter-btn {
@@ -262,11 +240,18 @@
       background: rgba(255, 255, 255, 0.05);
     }
 
+    .header-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
     .base-strip {
       flex: 0 0 auto;
-      display: grid;
-      gap: 10px;
-      padding: 14px 18px 12px;
+      display: block;
+      padding: 10px 18px 12px;
       background: linear-gradient(180deg, rgba(11, 21, 36, 0.9), rgba(11, 21, 36, 0.7));
       border-bottom: 1px solid rgba(154, 171, 193, 0.08);
       z-index: 2;
@@ -280,6 +265,8 @@
       color: var(--muted);
       font-size: 13px;
       line-height: 1.35;
+      white-space: nowrap;
+      flex: 1 1 auto;
     }
 
     .base-context strong {
@@ -1278,7 +1265,8 @@
       .app-header { gap: 8px; }
       .header-actions { gap: 6px; }
       .action-btn { padding-inline: 10px; font-size: 12px; }
-      .mode-btn { min-width: 78px; padding-inline: 12px; }
+      .mode-btn { padding-inline: 10px; font-size: 12px; }
+      .header-meta { font-size: 11px; }
     }
 
     @media (max-width: 390px) {
@@ -1302,7 +1290,10 @@
   <div class="app-shell" id="appShell">
     <header class="app-header">
       <div class="header-top">
-        <div class="brand-kicker">Офіційний курс НБУ</div>
+        <div class="mode-toggle" id="viewModeToggle" role="tablist" aria-label="Режим перегляду">
+          <button class="mode-btn active" type="button" data-view-mode="currencies" role="tab" aria-selected="true">Валюти</button>
+          <button class="mode-btn" type="button" data-view-mode="metals" role="tab" aria-selected="false">Метали</button>
+        </div>
         <div class="header-actions">
           <button class="icon-btn" id="refreshBtn" type="button" aria-label="Оновити курси">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1317,17 +1308,13 @@
         </div>
       </div>
       <h1 class="a11y-hidden">Курси та метали НБУ</h1>
-      <div class="brand-block">
-        <div class="mode-toggle" id="viewModeToggle" role="tablist" aria-label="Режим перегляду">
-          <button class="mode-btn active" type="button" data-view-mode="currencies" role="tab" aria-selected="true">Валюти</button>
-          <button class="mode-btn" type="button" data-view-mode="metals" role="tab" aria-selected="false">Метали</button>
-        </div>
+      <div class="header-info">
+        <div class="base-context" id="baseContext">Курси відносно <strong>UAH</strong></div>
         <p class="header-meta" id="headerMeta">Завантаження даних…</p>
       </div>
     </header>
 
     <section class="base-strip" aria-label="Вибір базової валюти">
-      <div class="base-context" id="baseContext">Курси відносно <strong>UAH</strong></div>
       <div class="chips-row" id="baseChips"></div>
     </section>
 
