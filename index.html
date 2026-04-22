@@ -194,15 +194,6 @@
       background: rgba(255, 255, 255, 0.06);
     }
 
-    .install-diagnostics {
-      margin: 0;
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.35;
-      text-align: right;
-      max-width: 190px;
-    }
-
     .icon-btn,
     .action-btn,
     .ghost-btn,
@@ -1317,7 +1308,6 @@
         </button>
         <button class="action-btn install-btn" id="installAppBtn" type="button" hidden>Встановити</button>
         <button class="action-btn" id="openConverterBtn" type="button">Конвертер</button>
-        <p class="install-diagnostics" id="installDiagnostics" role="status" aria-live="polite"></p>
       </div>
     </header>
 
@@ -1432,7 +1422,6 @@
         refreshBtn: document.getElementById('refreshBtn'),
         installAppBtn: document.getElementById('installAppBtn'),
         openConverterBtn: document.getElementById('openConverterBtn'),
-        installDiagnostics: document.getElementById('installDiagnostics'),
         viewModeToggle: document.getElementById('viewModeToggle'),
         baseOverlay: document.getElementById('baseOverlay'),
         baseSheet: document.getElementById('baseSheet'),
@@ -1651,10 +1640,6 @@
         });
 
         window.addEventListener('beforeinstallprompt', (event) => {
-          console.info('[PWA] beforeinstallprompt fired', {
-            secureContext: state.install.secureContext,
-            installed: state.install.installed
-          });
           event.preventDefault();
           state.install.deferredPrompt = event;
           state.install.available = !state.install.installed;
@@ -1662,7 +1647,6 @@
         });
 
         window.addEventListener('appinstalled', () => {
-          console.info('[PWA] appinstalled fired');
           state.install.installed = true;
           state.install.available = false;
           state.install.deferredPrompt = null;
@@ -1673,27 +1657,6 @@
       function syncInstallButton() {
         const shouldShow = state.install.available && !state.install.installed && Boolean(state.install.deferredPrompt);
         refs.installAppBtn.hidden = !shouldShow;
-        if (refs.installDiagnostics) {
-          refs.installDiagnostics.textContent = getInstallDiagnosticsMessage(shouldShow);
-        }
-      }
-
-      function getInstallDiagnosticsMessage(promptAvailable) {
-        const secureState = state.install.secureContext ? 'Secure context: yes.' : 'Secure context: no.';
-
-        if (!state.install.secureContext) {
-          return `${secureState} Для встановлення відкрийте сайт через HTTPS або localhost.`;
-        }
-
-        if (state.install.installed) {
-          return `${secureState} Застосунок уже встановлено.`;
-        }
-
-        if (promptAvailable) {
-          return `${secureState} Install prompt готовий.`;
-        }
-
-        return `${secureState} Якщо prompt не з'явився, скористайтеся меню Chrome: Install app / Add to Home screen.`;
       }
 
       async function onInstallButtonClick() {
@@ -1703,8 +1666,7 @@
         promptEvent.prompt();
 
         try {
-          const choice = await promptEvent.userChoice;
-          console.info('[PWA] userChoice', choice);
+          await promptEvent.userChoice;
         } finally {
           state.install.available = false;
           state.install.deferredPrompt = null;
