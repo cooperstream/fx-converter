@@ -1,9 +1,9 @@
 {
-  "id": "/",
+  "id": "./",
   "name": "Курси та метали НБУ",
   "short_name": "FX НБУ",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#07111d",
   "theme_color": "#08111f",
