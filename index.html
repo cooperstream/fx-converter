@@ -1719,7 +1719,10 @@
         promptEvent.prompt();
 
         try {
-          await promptEvent.userChoice;
+          const choiceResult = await promptEvent.userChoice;
+          if (choiceResult?.outcome === 'accepted') {
+            markInstalled();
+          }
         } finally {
           state.install.available = false;
           state.install.deferredPrompt = null;
