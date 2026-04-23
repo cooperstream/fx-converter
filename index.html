@@ -1451,8 +1451,10 @@
         viewMode: 'nbu.fx.view.mode',
         installed: 'nbu.fx.installed'
       };
-      const PWA_APP_ID = './';
+      const PWA_APP_ID = '/fx-converter/';
       const PWA_MANIFEST_URL = './manifest.webmanifest';
+      const INSTALL_DEBUG = true;
+      let manifestMetadataPromise = null;
 
       const refs = {
         headerMeta: document.getElementById('headerMeta'),
@@ -1722,6 +1724,12 @@
           writeLS(STORAGE_KEYS.installed, '1');
         }
         const shouldShow = state.install.available && !state.install.installed && Boolean(state.install.deferredPrompt);
+        logInstallDebug('updateInstallButtonVisibility()', {
+          shouldShow,
+          installAvailable: state.install.available,
+          installed: state.install.installed,
+          hasDeferredPrompt: Boolean(state.install.deferredPrompt)
+        });
         refs.installAppBtn.hidden = !shouldShow;
       }
 
@@ -1754,62 +1762,188 @@
       }
 
       async function isAppInstalled() {
-        if (isRunningAsInstalledApp()) {
+        const debugContext = collectInstallDebugContext();
+        const runningAsInstalledApp = isRunningAsInstalledApp();
+        debugContext.isRunningAsInstalledApp = runningAsInstalledApp;
+
+        if (runningAsInstalledApp) {
+          logInstallDebug('isAppInstalled() -> true (running as installed app)', debugContext);
           return true;
         }
 
         const persistedInstalled = readLS(STORAGE_KEYS.installed, '') === '1';
+        debugContext.persistedInstalledFlag = persistedInstalled;
         if (persistedInstalled) {
+          logInstallDebug('isAppInstalled() -> true (persisted flag)', debugContext);
           return true;
         }
 
         if (typeof navigator.getInstalledRelatedApps !== 'function') {
+          logInstallDebug('isAppInstalled() -> false (getInstalledRelatedApps unavailable)', debugContext);
           return false;
         }
 
         try {
+          const manifestMetadata = await getManifestMetadata();
+          const identifiers = buildInstallIdentifiers(manifestMetadata, debugContext.absoluteManifestUrl);
+          debugContext.manifestId = manifestMetadata.manifestId || '';
+          debugContext.relatedApplications = manifestMetadata.relatedApplications;
+          debugContext.normalizedIdentifiers = {
+            primaryAppId: identifiers.primaryAppId,
+            appIds: Array.from(identifiers.appIds),
+            appUrls: Array.from(identifiers.appUrls),
+            manifestUrls: Array.from(identifiers.manifestUrls),
+            currentManifestAbsoluteUrl: identifiers.currentManifestAbsoluteUrl
+          };
+
           const relatedApps = await navigator.getInstalledRelatedApps();
-          if (!Array.isArray(relatedApps) || !relatedApps.length) return false;
-
-          const pwaIdentifiers = getCurrentPwaIdentifiers();
-          const hasMatch = relatedApps.some((app) => {
-            const appUrl = normalizeComparableUrl(app?.url);
-            const appId = normalizeComparableUrl(app?.id);
-            return (appUrl && pwaIdentifiers.has(appUrl)) || (appId && pwaIdentifiers.has(appId));
-          });
-
-          if (hasMatch) {
-            return true;
+          debugContext.rawInstalledRelatedApps = relatedApps;
+          if (!Array.isArray(relatedApps) || !relatedApps.length) {
+            logInstallDebug('isAppInstalled() -> false (no related apps)', debugContext);
+            return false;
           }
+
+          for (const app of relatedApps) {
+            const normalizedId = normalizeComparableUrl(app?.id, identifiers.currentManifestAbsoluteUrl || window.location.href);
+            const normalizedUrl = normalizeComparableUrl(app?.url, identifiers.currentManifestAbsoluteUrl || window.location.href);
+
+            if (normalizedId && identifiers.appIds.has(normalizedId)) {
+              logInstallDebug('isAppInstalled() -> true (matched normalized app id)', {
+                ...debugContext,
+                matchedBy: 'normalized_app_id',
+                matchedValue: normalizedId
+              });
+              return true;
+            }
+
+            if (normalizedUrl && identifiers.appUrls.has(normalizedUrl)) {
+              logInstallDebug('isAppInstalled() -> true (matched normalized app url)', {
+                ...debugContext,
+                matchedBy: 'normalized_app_url',
+                matchedValue: normalizedUrl
+              });
+              return true;
+            }
+
+            if (normalizedUrl && identifiers.manifestUrls.has(normalizedUrl)) {
+              logInstallDebug('isAppInstalled() -> true (matched manifest url)', {
+                ...debugContext,
+                matchedBy: 'manifest_url',
+                matchedValue: normalizedUrl
+              });
+              return true;
+            }
+
+            if (normalizedUrl && normalizedUrl === identifiers.currentManifestAbsoluteUrl) {
+              logInstallDebug('isAppInstalled() -> true (matched current manifest absolute url)', {
+                ...debugContext,
+                matchedBy: 'current_manifest_absolute_url',
+                matchedValue: normalizedUrl
+              });
+              return true;
+            }
+          }
+
+          logInstallDebug('isAppInstalled() -> false (no matcher branch matched)', debugContext);
         } catch {
+          logInstallDebug('isAppInstalled() -> false (error while checking related apps)', debugContext);
           return false;
         }
 
         return false;
       }
 
-      function getCurrentPwaIdentifiers() {
-        const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute('href') || PWA_MANIFEST_URL;
-        const candidates = [
-          window.location.href,
-          window.location.origin,
-          window.location.pathname,
-          PWA_APP_ID,
-          './',
-          '/',
-          new URL('./', window.location.href).href,
-          PWA_MANIFEST_URL,
-          manifestHref
-        ];
+      async function getManifestMetadata() {
+        if (!manifestMetadataPromise) {
+          manifestMetadataPromise = (async () => {
+            const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute('href') || PWA_MANIFEST_URL;
+            const absoluteManifestUrl = normalizeComparableUrl(manifestHref);
+            const fallback = { absoluteManifestUrl, manifestId: '', relatedApplications: [] };
+            if (!absoluteManifestUrl) return fallback;
 
-        return new Set(candidates.map((candidate) => normalizeComparableUrl(candidate)).filter(Boolean));
+            const response = await fetch(absoluteManifestUrl, { cache: 'no-store' });
+            if (!response.ok) return fallback;
+            const json = await response.json();
+            const relatedApplications = Array.isArray(json?.related_applications) ? json.related_applications : [];
+            return {
+              absoluteManifestUrl,
+              manifestId: typeof json?.id === 'string' ? json.id : '',
+              relatedApplications
+            };
+          })();
+        }
+        return manifestMetadataPromise;
       }
 
-      function normalizeComparableUrl(value) {
+      function buildInstallIdentifiers(manifestMetadata, fallbackManifestUrl) {
+        const currentManifestAbsoluteUrl = manifestMetadata.absoluteManifestUrl || normalizeComparableUrl(fallbackManifestUrl || PWA_MANIFEST_URL);
+        const appIds = new Set();
+        const appUrls = new Set();
+        const manifestUrls = new Set();
+
+        const primaryManifestIdRaw = manifestMetadata.manifestId || PWA_APP_ID;
+        const primaryAppId = normalizeComparableUrl(primaryManifestIdRaw, currentManifestAbsoluteUrl || window.location.href);
+        if (primaryAppId) appIds.add(primaryAppId);
+
+        const configAppId = normalizeComparableUrl(PWA_APP_ID, currentManifestAbsoluteUrl || window.location.href);
+        if (configAppId) appIds.add(configAppId);
+
+        if (currentManifestAbsoluteUrl) manifestUrls.add(currentManifestAbsoluteUrl);
+        const configuredManifestUrl = normalizeComparableUrl(PWA_MANIFEST_URL, window.location.href);
+        if (configuredManifestUrl) manifestUrls.add(configuredManifestUrl);
+
+        const linkManifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute('href');
+        const linkManifestAbsolute = normalizeComparableUrl(linkManifestHref || '', window.location.href);
+        if (linkManifestAbsolute) manifestUrls.add(linkManifestAbsolute);
+
+        manifestMetadata.relatedApplications
+          .filter((app) => app?.platform === 'webapp')
+          .forEach((app) => {
+            const normalizedRelatedId = normalizeComparableUrl(app.id, currentManifestAbsoluteUrl || window.location.href);
+            const normalizedRelatedUrl = normalizeComparableUrl(app.url, currentManifestAbsoluteUrl || window.location.href);
+            if (normalizedRelatedId) appIds.add(normalizedRelatedId);
+            if (normalizedRelatedUrl) {
+              appUrls.add(normalizedRelatedUrl);
+              manifestUrls.add(normalizedRelatedUrl);
+            }
+          });
+
+        const locationOrigin = normalizeComparableUrl(window.location.origin);
+        const locationPath = normalizeComparableUrl(window.location.pathname);
+        if (locationOrigin) appUrls.add(locationOrigin);
+        if (locationPath) appUrls.add(locationPath);
+
+        return { primaryAppId, appIds, appUrls, manifestUrls, currentManifestAbsoluteUrl };
+      }
+
+      function collectInstallDebugContext() {
+        const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute('href') || '';
+        const absoluteManifestUrl = normalizeComparableUrl(manifestHref || PWA_MANIFEST_URL);
+        return {
+          isRunningAsInstalledApp: false,
+          displayModeStandalone: typeof window.matchMedia === 'function' ? window.matchMedia('(display-mode: standalone)').matches : false,
+          navigatorStandalone: window.navigator.standalone === true,
+          documentReferrer: document.referrer,
+          manifestLinkHref: manifestHref,
+          absoluteManifestUrl,
+          manifestId: '',
+          relatedApplications: [],
+          rawInstalledRelatedApps: [],
+          normalizedIdentifiers: null,
+          persistedInstalledFlag: false
+        };
+      }
+
+      function logInstallDebug(message, details) {
+        if (!INSTALL_DEBUG) return;
+        console.debug('[PWA install detection]', message, details);
+      }
+
+      function normalizeComparableUrl(value, base = window.location.href) {
         if (!value || typeof value !== 'string') return '';
 
         try {
-          const normalized = new URL(value, window.location.href);
+          const normalized = new URL(value, base);
           normalized.hash = '';
           normalized.search = '';
           const pathname = normalized.pathname.replace(/\/+$/, '') || '/';
