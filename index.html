@@ -1451,6 +1451,8 @@
         viewMode: 'nbu.fx.view.mode',
         installed: 'nbu.fx.installed'
       };
+      const PWA_APP_ID = './';
+      const PWA_MANIFEST_URL = './manifest.webmanifest';
 
       const refs = {
         headerMeta: document.getElementById('headerMeta'),
@@ -1510,7 +1512,7 @@
         install: {
           deferredPrompt: null,
           available: false,
-          installed: isRunningAsInstalledApp() || readLS(STORAGE_KEYS.installed, '') === '1',
+          installed: false,
           secureContext: window.isSecureContext === true
         }
       };
@@ -1518,9 +1520,6 @@
       init();
 
       async function init() {
-        syncInstalledStateFromEnvironment();
-        await detectInstalledApp();
-
         bindStaticEvents();
         installSheetDrag(refs.baseSheet, document.getElementById('baseGrab'), closeBaseSheet);
         installSheetDrag(refs.detailSheet, document.getElementById('detailGrab'), closeDetailSheet, { direction: 'down' });
@@ -1531,7 +1530,7 @@
         renderBaseSheet();
         renderDetailBody();
         renderConverterBody();
-        syncInstallButton();
+        await updateInstallButtonVisibility();
         loadCurrentRates();
       }
 
@@ -1679,11 +1678,24 @@
           }
         });
 
+        document.addEventListener('DOMContentLoaded', () => {
+          void updateInstallButtonVisibility();
+        });
+
+        window.addEventListener('pageshow', () => {
+          void updateInstallButtonVisibility();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            void updateInstallButtonVisibility();
+          }
+        });
+
         window.addEventListener('beforeinstallprompt', async (event) => {
           event.preventDefault();
-          syncInstalledStateFromEnvironment();
 
-          const alreadyInstalled = await detectInstalledApp();
+          const alreadyInstalled = await isAppInstalled();
           if (alreadyInstalled) {
             state.install.available = false;
             state.install.deferredPrompt = null;
@@ -1693,31 +1705,30 @@
 
           state.install.deferredPrompt = event;
           state.install.available = true;
-          syncInstallButton();
+          await updateInstallButtonVisibility();
         });
 
-        window.addEventListener('appinstalled', () => {
+        window.addEventListener('appinstalled', async () => {
           markInstalled();
-          state.install.available = false;
-          state.install.deferredPrompt = null;
-          syncInstallButton();
+          await updateInstallButtonVisibility();
         });
       }
 
-      function syncInstallButton() {
-        syncInstalledStateFromEnvironment();
+      async function updateInstallButtonVisibility() {
+        state.install.installed = await isAppInstalled();
         if (state.install.installed) {
           state.install.available = false;
           state.install.deferredPrompt = null;
+          writeLS(STORAGE_KEYS.installed, '1');
         }
-
         const shouldShow = state.install.available && !state.install.installed && Boolean(state.install.deferredPrompt);
         refs.installAppBtn.hidden = !shouldShow;
       }
 
       async function onInstallButtonClick() {
         const promptEvent = state.install.deferredPrompt;
-        if (!promptEvent || state.install.installed || isRunningAsInstalledApp()) return;
+        const alreadyInstalled = await isAppInstalled();
+        if (!promptEvent || alreadyInstalled) return;
 
         promptEvent.prompt();
 
@@ -1729,7 +1740,7 @@
         } finally {
           state.install.available = false;
           state.install.deferredPrompt = null;
-          syncInstallButton();
+          await updateInstallButtonVisibility();
         }
       }
 
@@ -1742,15 +1753,13 @@
         return runningInAppDisplayMode || iosStandalone || androidTrustedWebActivity;
       }
 
-      async function detectInstalledApp() {
+      async function isAppInstalled() {
         if (isRunningAsInstalledApp()) {
-          markInstalled();
           return true;
         }
 
         const persistedInstalled = readLS(STORAGE_KEYS.installed, '') === '1';
         if (persistedInstalled) {
-          markInstalled();
           return true;
         }
 
@@ -1770,7 +1779,6 @@
           });
 
           if (hasMatch) {
-            markInstalled();
             return true;
           }
         } catch {
@@ -1781,14 +1789,16 @@
       }
 
       function getCurrentPwaIdentifiers() {
-        const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute('href') || '';
+        const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute('href') || PWA_MANIFEST_URL;
         const candidates = [
           window.location.href,
           window.location.origin,
           window.location.pathname,
+          PWA_APP_ID,
           './',
           '/',
           new URL('./', window.location.href).href,
+          PWA_MANIFEST_URL,
           manifestHref
         ];
 
@@ -1806,13 +1816,6 @@
           return `${normalized.origin}${pathname}`;
         } catch {
           return '';
-        }
-      }
-
-      function syncInstalledStateFromEnvironment() {
-        const persistedInstalled = readLS(STORAGE_KEYS.installed, '') === '1';
-        if (state.install.installed || persistedInstalled || isRunningAsInstalledApp()) {
-          markInstalled();
         }
       }
 

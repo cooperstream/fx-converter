@@ -9,6 +9,13 @@
   "theme_color": "#08111f",
   "lang": "uk",
   "description": "Мобільний застосунок для перегляду курсів валют і банківських металів НБУ з конвертером та графіками.",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "./manifest.webmanifest",
+      "id": "./"
+    }
+  ],
   "icons": [
     {
       "src": "icons/icon-192.png",
