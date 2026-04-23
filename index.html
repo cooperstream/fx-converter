@@ -112,7 +112,7 @@
       flex: 1 1 auto;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
     }
 
     .header-title {
@@ -180,7 +180,7 @@
       justify-content: flex-end;
       gap: 8px;
       align-self: flex-start;
-      margin-top: 3px;
+      margin-top: 1px;
     }
 
     .install-btn {
@@ -1518,11 +1518,7 @@
       init();
 
       function init() {
-        const runningAsInstalled = isRunningAsInstalledApp();
-        if (runningAsInstalled || state.install.installed) {
-          state.install.installed = true;
-          writeLS(STORAGE_KEYS.installed, '1');
-        }
+        syncInstalledStateFromEnvironment();
 
         bindStaticEvents();
         installSheetDrag(refs.baseSheet, document.getElementById('baseGrab'), closeBaseSheet);
@@ -1684,12 +1680,10 @@
 
         window.addEventListener('beforeinstallprompt', (event) => {
           event.preventDefault();
-          const treatedAsInstalled = state.install.installed || isRunningAsInstalledApp() || readLS(STORAGE_KEYS.installed, '') === '1';
-          if (treatedAsInstalled) {
-            state.install.installed = true;
+          syncInstalledStateFromEnvironment();
+          if (state.install.installed) {
             state.install.available = false;
             state.install.deferredPrompt = null;
-            writeLS(STORAGE_KEYS.installed, '1');
             syncInstallButton();
             return;
           }
@@ -1700,19 +1694,18 @@
         });
 
         window.addEventListener('appinstalled', () => {
-          state.install.installed = true;
+          markInstalled();
           state.install.available = false;
           state.install.deferredPrompt = null;
-          writeLS(STORAGE_KEYS.installed, '1');
           syncInstallButton();
         });
       }
 
       function syncInstallButton() {
-        const treatedAsInstalled = state.install.installed || isRunningAsInstalledApp() || readLS(STORAGE_KEYS.installed, '') === '1';
-        if (treatedAsInstalled) {
-          state.install.installed = true;
-          writeLS(STORAGE_KEYS.installed, '1');
+        syncInstalledStateFromEnvironment();
+        if (state.install.installed) {
+          state.install.available = false;
+          state.install.deferredPrompt = null;
         }
 
         const shouldShow = state.install.available && !state.install.installed && Boolean(state.install.deferredPrompt);
@@ -1738,6 +1731,18 @@
         const standaloneMedia = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
         const iosStandalone = window.navigator.standalone === true;
         return standaloneMedia || iosStandalone;
+      }
+
+      function syncInstalledStateFromEnvironment() {
+        const persistedInstalled = readLS(STORAGE_KEYS.installed, '') === '1';
+        if (state.install.installed || persistedInstalled || isRunningAsInstalledApp()) {
+          markInstalled();
+        }
+      }
+
+      function markInstalled() {
+        state.install.installed = true;
+        writeLS(STORAGE_KEYS.installed, '1');
       }
 
       async function loadCurrentRates(isManual = false) {
