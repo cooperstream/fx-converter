@@ -1517,8 +1517,9 @@
 
       init();
 
-      function init() {
+      async function init() {
         syncInstalledStateFromEnvironment();
+        await detectInstalledApp();
 
         bindStaticEvents();
         installSheetDrag(refs.baseSheet, document.getElementById('baseGrab'), closeBaseSheet);
@@ -1678,13 +1679,15 @@
           }
         });
 
-        window.addEventListener('beforeinstallprompt', (event) => {
+        window.addEventListener('beforeinstallprompt', async (event) => {
           event.preventDefault();
           syncInstalledStateFromEnvironment();
-          if (state.install.installed) {
+
+          const alreadyInstalled = await detectInstalledApp();
+          if (alreadyInstalled) {
             state.install.available = false;
             state.install.deferredPrompt = null;
-            syncInstallButton();
+            refs.installAppBtn.hidden = true;
             return;
           }
 
@@ -1736,6 +1739,73 @@
         return standaloneMedia || iosStandalone;
       }
 
+      async function detectInstalledApp() {
+        if (isRunningAsInstalledApp()) {
+          markInstalled();
+          return true;
+        }
+
+        const persistedInstalled = readLS(STORAGE_KEYS.installed, '') === '1';
+        if (persistedInstalled) {
+          markInstalled();
+          return true;
+        }
+
+        if (typeof navigator.getInstalledRelatedApps !== 'function') {
+          return false;
+        }
+
+        try {
+          const relatedApps = await navigator.getInstalledRelatedApps();
+          if (!Array.isArray(relatedApps) || !relatedApps.length) return false;
+
+          const pwaIdentifiers = getCurrentPwaIdentifiers();
+          const hasMatch = relatedApps.some((app) => {
+            const appUrl = normalizeComparableUrl(app?.url);
+            const appId = normalizeComparableUrl(app?.id);
+            return (appUrl && pwaIdentifiers.has(appUrl)) || (appId && pwaIdentifiers.has(appId));
+          });
+
+          if (hasMatch) {
+            markInstalled();
+            return true;
+          }
+        } catch {
+          return false;
+        }
+
+        return false;
+      }
+
+      function getCurrentPwaIdentifiers() {
+        const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute('href') || '';
+        const candidates = [
+          window.location.href,
+          window.location.origin,
+          window.location.pathname,
+          './',
+          '/',
+          new URL('./', window.location.href).href,
+          manifestHref
+        ];
+
+        return new Set(candidates.map((candidate) => normalizeComparableUrl(candidate)).filter(Boolean));
+      }
+
+      function normalizeComparableUrl(value) {
+        if (!value || typeof value !== 'string') return '';
+
+        try {
+          const normalized = new URL(value, window.location.href);
+          normalized.hash = '';
+          normalized.search = '';
+          const pathname = normalized.pathname.replace(/\/+$/, '') || '/';
+          return `${normalized.origin}${pathname}`;
+        } catch {
+          return '';
+        }
+      }
+
       function syncInstalledStateFromEnvironment() {
         const persistedInstalled = readLS(STORAGE_KEYS.installed, '') === '1';
         if (state.install.installed || persistedInstalled || isRunningAsInstalledApp()) {
@@ -1745,6 +1815,9 @@
 
       function markInstalled() {
         state.install.installed = true;
+        state.install.available = false;
+        state.install.deferredPrompt = null;
+        refs.installAppBtn.hidden = true;
         writeLS(STORAGE_KEYS.installed, '1');
       }
 
