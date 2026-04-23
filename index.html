@@ -1734,9 +1734,12 @@
       }
 
       function isRunningAsInstalledApp() {
-        const standaloneMedia = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+        const supportsMatchMedia = typeof window.matchMedia === 'function';
+        const runningInAppDisplayMode = supportsMatchMedia && ['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay']
+          .some((mode) => window.matchMedia(`(display-mode: ${mode})`).matches);
         const iosStandalone = window.navigator.standalone === true;
-        return standaloneMedia || iosStandalone;
+        const androidTrustedWebActivity = document.referrer.startsWith('android-app://');
+        return runningInAppDisplayMode || iosStandalone || androidTrustedWebActivity;
       }
 
       async function detectInstalledApp() {
