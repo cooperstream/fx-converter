@@ -1,5 +1,5 @@
 {
-  "id": "/fx-converter/",
+  "id": "./",
   "name": "Курси та метали НБУ",
   "short_name": "FX НБУ",
   "start_url": "./",
@@ -13,7 +13,7 @@
     {
       "platform": "webapp",
       "url": "./manifest.webmanifest",
-      "id": "/fx-converter/"
+      "id": "./"
     }
   ],
   "icons": [
