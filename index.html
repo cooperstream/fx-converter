@@ -1623,6 +1623,10 @@
         fetchedAt: null,
         baseCurrency: readLS(STORAGE_KEYS.base, 'UAH'),
         viewMode: ['currencies', 'metals'].includes(readLS(STORAGE_KEYS.viewMode, 'currencies')) ? readLS(STORAGE_KEYS.viewMode, 'currencies') : 'currencies',
+        scrollPositions: {
+          currencies: 0,
+          metals: 0
+        },
         activeOverlay: null,
         baseSearch: '',
         detailCurrency: null,
@@ -1915,6 +1919,7 @@
         const initSwipeTrack = (direction, targetMode) => {
           const width = refs.cardsSwipeViewport.clientWidth || refs.cardsSwipeViewport.getBoundingClientRect().width || 0;
           if (!width) return false;
+          saveCurrentViewScroll();
           cardsSwipeState.active = true;
           cardsSwipeState.dragging = true;
           cardsSwipeState.direction = direction;
@@ -1964,7 +1969,7 @@
             cleanupSwipeTrack();
             if (shouldSwitch && targetMode) {
               suppressNextCardClick = true;
-              setViewMode(targetMode);
+              setViewMode(targetMode, { skipSaveCurrentScroll: true });
             } else {
               renderCards();
             }
@@ -2537,12 +2542,39 @@
         });
       }
 
-      function setViewMode(mode) {
+      function setViewMode(mode, options = {}) {
         if (!['currencies', 'metals'].includes(mode) || mode === state.viewMode) return;
+        if (!options.skipSaveCurrentScroll) {
+          saveCurrentViewScroll();
+        }
         state.viewMode = mode;
         writeLS(STORAGE_KEYS.viewMode, mode);
         renderViewToggle();
         renderCards();
+        queueRestoreViewScroll(mode);
+      }
+
+      function getCardsScrollElement() {
+        return refs.mainScrollArea || refs.cardsList || null;
+      }
+
+      function saveCurrentViewScroll() {
+        const scrollEl = getCardsScrollElement();
+        if (!scrollEl) return;
+        state.scrollPositions[state.viewMode] = scrollEl.scrollTop;
+      }
+
+      function restoreViewScroll(mode) {
+        const scrollEl = getCardsScrollElement();
+        if (!scrollEl) return;
+        const savedTop = state.scrollPositions[mode] || 0;
+        scrollEl.scrollTop = savedTop;
+      }
+
+      function queueRestoreViewScroll(mode) {
+        requestAnimationFrame(() => {
+          restoreViewScroll(mode);
+        });
       }
 
       function getEmptyCardsMarkup(mode) {
