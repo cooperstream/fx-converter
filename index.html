@@ -937,6 +937,13 @@
       gap: 6px;
     }
 
+    .detail-rate-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
     .detail-rate-value {
       font-size: clamp(30px, 8vw, 38px);
       line-height: 0.95;
@@ -953,10 +960,12 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .detail-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    .card-converter-btn {
+      min-height: 38px;
+      width: auto;
+      padding: 0 12px;
+      flex: 0 0 auto;
+      white-space: nowrap;
     }
 
     .period-row {
@@ -2520,11 +2529,11 @@
                 <div class="delta-pill ${currentDeltaClass}">${escapeHtml(currentDeltaText)}</div>
               </div>
               <div class="detail-rate">
-                <div class="detail-rate-value">${formatRate(rate, getCurrentViewRateDigits())}</div>
+                <div class="detail-rate-row">
+                  <div class="detail-rate-value">${formatRate(rate, getCurrentViewRateDigits())}</div>
+                  <button class="converter-btn card-converter-btn" type="button" data-detail-convert>Конвертер</button>
+                </div>
                 <div class="detail-rate-caption">1 ${escapeHtml(row.cc)} = ${formatRate(rate, getCurrentViewRateDigits())} ${escapeHtml(state.baseCurrency)}</div>
-              </div>
-              <div class="detail-actions">
-                <button class="ghost-btn" type="button" data-detail-convert>Конвертувати</button>
               </div>
             </article>
             <div class="period-row" aria-label="Період графіка">
