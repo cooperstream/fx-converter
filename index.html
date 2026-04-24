@@ -937,9 +937,15 @@
       gap: 6px;
     }
 
+    .detail-rate-main {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
     .detail-rate-row {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
       gap: 12px;
     }
@@ -2530,10 +2536,12 @@
               </div>
               <div class="detail-rate">
                 <div class="detail-rate-row">
-                  <div class="detail-rate-value">${formatRate(rate, getCurrentViewRateDigits())}</div>
+                  <div class="detail-rate-main">
+                    <div class="detail-rate-value">${formatRate(rate, getCurrentViewRateDigits())}</div>
+                    <div class="detail-rate-caption">1 ${escapeHtml(row.cc)} = ${formatRate(rate, getCurrentViewRateDigits())} ${escapeHtml(state.baseCurrency)}</div>
+                  </div>
                   <button class="converter-btn card-converter-btn" type="button" data-detail-convert>Конвертер</button>
                 </div>
-                <div class="detail-rate-caption">1 ${escapeHtml(row.cc)} = ${formatRate(rate, getCurrentViewRateDigits())} ${escapeHtml(state.baseCurrency)}</div>
               </div>
             </article>
             <div class="period-row" aria-label="Період графіка">
