@@ -323,16 +323,30 @@
       z-index: 2;
     }
 
-    .chips-row {
+    .base-currency-row {
       display: flex;
+      align-items: center;
       gap: 10px;
+      min-width: 0;
+    }
+
+    .base-currency-scroll {
+      flex: 1 1 auto;
+      min-width: 0;
       overflow-x: auto;
       padding-bottom: 2px;
       scrollbar-width: none;
     }
 
-    .chips-row::-webkit-scrollbar {
+    .base-currency-scroll::-webkit-scrollbar {
       display: none;
+    }
+
+    .chips-row {
+      display: flex;
+      gap: 10px;
+      width: max-content;
+      min-width: 100%;
     }
 
     .chip {
@@ -349,6 +363,13 @@
       color: var(--text);
       font-weight: 600;
       white-space: nowrap;
+    }
+
+    .more-currencies-btn {
+      flex: 0 0 auto;
+      margin-left: auto;
+      min-width: 46px;
+      padding-inline: 12px;
     }
 
     .chip.active {
@@ -1382,7 +1403,12 @@
     </header>
 
     <section class="base-strip" aria-label="Вибір базової валюти">
-      <div class="chips-row" id="baseChips"></div>
+      <div class="base-currency-row">
+        <div class="base-currency-scroll">
+          <div class="chips-row" id="baseChips"></div>
+        </div>
+        <button type="button" class="chip more-currencies-btn" id="baseMoreBtn" aria-label="Показати більше валют"></button>
+      </div>
     </section>
 
     <main class="content-area" id="mainScrollArea">
@@ -1491,6 +1517,7 @@
       const refs = {
         headerMeta: document.getElementById('headerMeta'),
         baseChips: document.getElementById('baseChips'),
+        baseMoreBtn: document.getElementById('baseMoreBtn'),
         cardsList: document.getElementById('cardsList'),
         refreshBtn: document.getElementById('refreshBtn'),
         installAppBtn: document.getElementById('installAppBtn'),
@@ -1605,12 +1632,15 @@
         refs.baseChips.addEventListener('click', (event) => {
           const chip = event.target.closest('[data-chip-action]');
           if (!chip) return;
-          if (chip.dataset.chipAction === 'more') {
-            openBaseSheet();
-            return;
-          }
           const code = chip.dataset.code;
           if (code) setBaseCurrency(code);
+        });
+        refs.baseMoreBtn.addEventListener('click', () => {
+          if (state.activeOverlay === 'base') {
+            closeBaseSheet();
+            return;
+          }
+          openBaseSheet();
         });
 
         refs.cardsList.addEventListener('click', (event) => {
@@ -2236,17 +2266,25 @@
       function renderBaseChips() {
         const chips = [];
         const selectedNonQuick = state.baseCurrency && !QUICK_BASES.includes(state.baseCurrency) ? state.baseCurrency : null;
+        if (selectedNonQuick) {
+          chips.push(renderChip(selectedNonQuick, true));
+        }
+        QUICK_BASES.forEach((code) => chips.push(renderChip(code, state.baseCurrency === code)));
+        refs.baseChips.innerHTML = chips.join('');
+        renderMoreCurrenciesButton(selectedNonQuick);
+      }
+
+      function renderMoreCurrenciesButton(selectedNonQuick) {
+        if (!refs.baseMoreBtn) return;
         const isBaseSheetOpen = state.activeOverlay === 'base';
         const moreLabel = isBaseSheetOpen ? 'Згорнути список валют' : 'Показати більше валют';
         const chevronIcon = isBaseSheetOpen
           ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 14L12 8L18 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
           : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 10L12 16L18 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-        if (selectedNonQuick) {
-          chips.push(renderChip(selectedNonQuick, true));
-        }
-        QUICK_BASES.forEach((code) => chips.push(renderChip(code, state.baseCurrency === code)));
-        chips.push(`<button type="button" class="chip ${selectedNonQuick ? 'active' : ''}" data-chip-action="more" aria-label="${moreLabel}">${chevronIcon}</button>`);
-        refs.baseChips.innerHTML = chips.join('');
+        refs.baseMoreBtn.classList.toggle('active', Boolean(selectedNonQuick) || isBaseSheetOpen);
+        refs.baseMoreBtn.setAttribute('aria-label', moreLabel);
+        refs.baseMoreBtn.setAttribute('aria-expanded', isBaseSheetOpen ? 'true' : 'false');
+        refs.baseMoreBtn.innerHTML = chevronIcon;
       }
 
       function renderChip(code, active) {
