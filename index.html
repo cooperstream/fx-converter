@@ -1606,6 +1606,7 @@
           secureContext: window.isSecureContext === true
         }
       };
+      let suppressNextCardClick = false;
 
       init();
 
@@ -1674,6 +1675,13 @@
         });
 
         refs.cardsList.addEventListener('click', (event) => {
+          if (suppressNextCardClick) {
+            event.preventDefault();
+            event.stopPropagation();
+            suppressNextCardClick = false;
+            return;
+          }
+
           const card = event.target.closest('[data-card-code]');
           if (!card || !state.currentRates) return;
           openDetailSheet(card.dataset.cardCode);
@@ -1813,26 +1821,6 @@
 
         const SWIPE_THRESHOLD_X = 60;
         const HORIZONTAL_DOMINANCE_RATIO = 1.5;
-        const INTERACTIVE_SELECTOR = [
-          'button',
-          'input',
-          'select',
-          'textarea',
-          'a',
-          '[role="button"]',
-          '[role="textbox"]',
-          '[role="listbox"]',
-          '[role="option"]',
-          '[role="combobox"]',
-          '[data-picker-open]',
-          '[data-converter-code]',
-          '[data-detail-convert]',
-          '[data-period]',
-          '.converter-layout',
-          '.converter-btn',
-          '.card-converter-btn',
-          '.list-row'
-        ].join(',');
         const CHART_SELECTOR = ['.chart-card', '.chart-area', '.chart-svg', '.chart-hit', 'canvas', 'svg.chart-svg'].join(',');
 
         const gesture = {
@@ -1859,8 +1847,22 @@
 
         const shouldIgnoreStart = (target) => {
           if (!(target instanceof Element)) return true;
+
           if (target.closest(CHART_SELECTOR)) return true;
-          if (target.closest(INTERACTIVE_SELECTOR)) return true;
+          if (target.closest('.converter-layout')) return true;
+          if (target.closest('[data-period]')) return true;
+          if (target.closest('[data-detail-convert]')) return true;
+          if (target.closest('[data-picker-open]')) return true;
+          if (target.closest('[data-converter-code]')) return true;
+          if (target.closest('.list-row')) return true;
+          if (target.closest('[role="listbox"], [role="option"], [role="combobox"], [role="textbox"], input, select, textarea, a')) return true;
+
+          const card = target.closest('.currency-card');
+          if (card) return false;
+
+          const button = target.closest('button, [role="button"]');
+          if (button) return true;
+
           return false;
         };
 
@@ -1891,12 +1893,14 @@
           gesture.horizontal = true;
           if (deltaX < 0 && state.viewMode === 'currencies') {
             setViewMode('metals');
+            suppressNextCardClick = true;
             gesture.switched = true;
             return;
           }
 
           if (deltaX > 0 && state.viewMode === 'metals') {
             setViewMode('currencies');
+            suppressNextCardClick = true;
             gesture.switched = true;
           }
         }, { passive: true });
