@@ -410,6 +410,7 @@
       gap: var(--card-gap);
       min-height: 100%;
       align-content: start;
+      touch-action: pan-y;
     }
 
     .currency-card {
@@ -1627,6 +1628,7 @@
         refs.refreshBtn.addEventListener('click', () => loadCurrentRates(true));
         refs.installAppBtn.addEventListener('click', onInstallButtonClick);
         refs.openConverterBtn.addEventListener('click', () => openConverterSheet());
+        installCardsSwipeModeSwitch();
         refs.viewModeToggle.addEventListener('click', (event) => {
           const btn = event.target.closest('[data-view-mode]');
           if (!btn) return;
@@ -1804,6 +1806,109 @@
           markInstalled();
           await updateInstallButtonVisibility();
         });
+      }
+
+      function installCardsSwipeModeSwitch() {
+        if (!refs.cardsList || typeof window.PointerEvent !== 'function') return;
+
+        const SWIPE_THRESHOLD_X = 60;
+        const HORIZONTAL_DOMINANCE_RATIO = 1.5;
+        const INTERACTIVE_SELECTOR = [
+          'button',
+          'input',
+          'select',
+          'textarea',
+          'a',
+          '[role="button"]',
+          '[role="textbox"]',
+          '[role="listbox"]',
+          '[role="option"]',
+          '[role="combobox"]',
+          '[data-picker-open]',
+          '[data-converter-code]',
+          '[data-detail-convert]',
+          '[data-period]',
+          '.converter-layout',
+          '.converter-btn',
+          '.card-converter-btn',
+          '.list-row'
+        ].join(',');
+        const CHART_SELECTOR = ['.chart-card', '.chart-area', '.chart-svg', '.chart-hit', 'canvas', 'svg.chart-svg'].join(',');
+
+        const gesture = {
+          pointerId: null,
+          startX: 0,
+          startY: 0,
+          currentX: 0,
+          currentY: 0,
+          allowed: false,
+          horizontal: false,
+          switched: false
+        };
+
+        const resetGesture = () => {
+          gesture.pointerId = null;
+          gesture.startX = 0;
+          gesture.startY = 0;
+          gesture.currentX = 0;
+          gesture.currentY = 0;
+          gesture.allowed = false;
+          gesture.horizontal = false;
+          gesture.switched = false;
+        };
+
+        const shouldIgnoreStart = (target) => {
+          if (!(target instanceof Element)) return true;
+          if (target.closest(CHART_SELECTOR)) return true;
+          if (target.closest(INTERACTIVE_SELECTOR)) return true;
+          return false;
+        };
+
+        refs.cardsList.addEventListener('pointerdown', (event) => {
+          if (event.pointerType === 'mouse' && event.button !== 0) return;
+          gesture.pointerId = event.pointerId;
+          gesture.startX = event.clientX;
+          gesture.startY = event.clientY;
+          gesture.currentX = event.clientX;
+          gesture.currentY = event.clientY;
+          gesture.allowed = !shouldIgnoreStart(event.target);
+          gesture.horizontal = false;
+          gesture.switched = false;
+        }, { passive: true });
+
+        refs.cardsList.addEventListener('pointermove', (event) => {
+          if (event.pointerId !== gesture.pointerId || !gesture.allowed || gesture.switched) return;
+
+          gesture.currentX = event.clientX;
+          gesture.currentY = event.clientY;
+          const deltaX = gesture.currentX - gesture.startX;
+          const deltaY = gesture.currentY - gesture.startY;
+          const absX = Math.abs(deltaX);
+          const absY = Math.abs(deltaY);
+          const isHorizontalSwipe = absX > SWIPE_THRESHOLD_X && absX > (absY * HORIZONTAL_DOMINANCE_RATIO);
+          if (!isHorizontalSwipe) return;
+
+          gesture.horizontal = true;
+          if (deltaX < 0 && state.viewMode === 'currencies') {
+            setViewMode('metals');
+            gesture.switched = true;
+            return;
+          }
+
+          if (deltaX > 0 && state.viewMode === 'metals') {
+            setViewMode('currencies');
+            gesture.switched = true;
+          }
+        }, { passive: true });
+
+        const finalizeGesture = (event) => {
+          if (event.pointerId !== gesture.pointerId) return;
+          resetGesture();
+        };
+
+        refs.cardsList.addEventListener('pointerup', finalizeGesture, { passive: true });
+        refs.cardsList.addEventListener('pointercancel', finalizeGesture, { passive: true });
+        refs.cardsList.addEventListener('pointerleave', finalizeGesture, { passive: true });
       }
 
       async function updateInstallButtonVisibility() {
