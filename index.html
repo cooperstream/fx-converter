@@ -129,8 +129,17 @@
       white-space: nowrap;
     }
 
+    .mode-controls-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+      min-width: 0;
+    }
+
     .mode-toggle {
-      width: auto;
+      width: 100%;
       max-width: none;
       display: inline-grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -158,6 +167,35 @@
     }
 
     .mode-btn.active {
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.05));
+      border-color: rgba(154, 171, 193, 0.16);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+    }
+
+    .converter-btn {
+      min-height: 38px;
+      min-width: 0;
+      width: 100%;
+      padding: 0 12px;
+      border-radius: 13px;
+      border: 1px solid rgba(154, 171, 193, 0.14);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .converter-btn:hover,
+    .converter-btn:focus-visible {
+      color: var(--text);
+      border-color: rgba(154, 171, 193, 0.28);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .converter-btn.active {
       color: var(--text);
       background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.05));
       border-color: rgba(154, 171, 193, 0.16);
@@ -249,15 +287,12 @@
       pointer-events: none;
     }
 
-    .refresh-btn,
-    .converter-btn {
+    .refresh-btn {
       color: var(--muted);
     }
 
     .refresh-btn:hover,
     .refresh-btn:focus-visible,
-    .converter-btn:hover,
-    .converter-btn:focus-visible,
     .install-btn:hover,
     .install-btn:focus-visible {
       color: var(--text);
@@ -1279,8 +1314,10 @@
       .app-header { gap: 9px; padding-bottom: 9px; }
       .header-top { gap: 10px; }
       .header-actions { gap: 6px; }
+      .mode-controls-row { gap: 8px; }
       .icon-btn { width: 40px; height: 40px; min-width: 40px; border-radius: 13px; }
-      .mode-btn { padding-inline: 10px; font-size: 12px; }
+      .mode-btn { padding-inline: 8px; font-size: 12px; }
+      .converter-btn { padding-inline: 10px; font-size: 12px; }
       .header-meta { font-size: 13px; }
     }
 
@@ -1333,23 +1370,14 @@
               <path d="M21 3v5h-5"></path>
             </svg>
           </button>
-          <button class="icon-btn converter-btn" id="openConverterBtn" type="button" aria-label="Відкрити конвертер" title="Конвертер">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <rect x="5" y="3.5" width="14" height="17" rx="2.5"></rect>
-              <path d="M8.5 8.5h7"></path>
-              <path d="M8.5 12h2"></path>
-              <path d="M12 12h2"></path>
-              <path d="M15.5 12h2"></path>
-              <path d="M8.5 15.5h2"></path>
-              <path d="M12 15.5h2"></path>
-              <path d="M15.5 15.5h2"></path>
-            </svg>
-          </button>
         </div>
       </div>
-      <div class="mode-toggle" id="viewModeToggle" role="tablist" aria-label="Режим перегляду">
-        <button class="mode-btn active" type="button" data-view-mode="currencies" role="tab" aria-selected="true">Валюти</button>
-        <button class="mode-btn" type="button" data-view-mode="metals" role="tab" aria-selected="false">Метали</button>
+      <div class="mode-controls-row">
+        <div class="mode-toggle" id="viewModeToggle" role="tablist" aria-label="Режим перегляду">
+          <button class="mode-btn active" type="button" data-view-mode="currencies" role="tab" aria-selected="true">Валюти</button>
+          <button class="mode-btn" type="button" data-view-mode="metals" role="tab" aria-selected="false">Метали</button>
+        </div>
+        <button class="converter-btn" id="openConverterBtn" type="button" aria-label="Відкрити конвертер" aria-pressed="false" title="Конвертер">Конвертер</button>
       </div>
     </header>
 
@@ -2168,6 +2196,9 @@
           overlay.classList.toggle('open', open);
           overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
         });
+        const isConverterOpen = state.activeOverlay === 'converter';
+        refs.openConverterBtn.classList.toggle('active', isConverterOpen);
+        refs.openConverterBtn.setAttribute('aria-pressed', isConverterOpen ? 'true' : 'false');
         renderBaseChips();
       }
 
