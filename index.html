@@ -413,6 +413,36 @@
       touch-action: pan-y;
     }
 
+    .cards-swipe-viewport {
+      width: 100%;
+      overflow: hidden;
+      touch-action: pan-y;
+    }
+
+    .cards-swipe-track {
+      display: flex;
+      width: 200%;
+      will-change: transform;
+      transform: translateX(0);
+    }
+
+    .cards-swipe-track.reverse {
+      flex-direction: row-reverse;
+    }
+
+    .cards-swipe-track.dragging {
+      transition: none;
+    }
+
+    .cards-swipe-track.animating {
+      transition: transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .cards-panel {
+      width: 50%;
+      flex: 0 0 50%;
+    }
+
     .currency-card {
       width: 100%;
       text-align: left;
@@ -1441,7 +1471,16 @@
     </section>
 
     <main class="content-area" id="mainScrollArea">
-      <section class="cards-list" id="cardsList"></section>
+      <div class="cards-swipe-viewport" id="cardsSwipeViewport">
+        <div class="cards-swipe-track" id="cardsSwipeTrack">
+          <section class="cards-panel cards-panel-current" aria-label="Поточний режим">
+            <section class="cards-list" id="cardsList"></section>
+          </section>
+          <section class="cards-panel cards-panel-next" aria-label="Наступний режим">
+            <section class="cards-list" id="cardsListNext" aria-hidden="true"></section>
+          </section>
+        </div>
+      </div>
     </main>
 
     <div class="overlay" id="baseOverlay" aria-hidden="true">
@@ -1547,7 +1586,10 @@
         headerMeta: document.getElementById('headerMeta'),
         baseChips: document.getElementById('baseChips'),
         baseMoreBtn: document.getElementById('baseMoreBtn'),
+        cardsSwipeViewport: document.getElementById('cardsSwipeViewport'),
+        cardsSwipeTrack: document.getElementById('cardsSwipeTrack'),
         cardsList: document.getElementById('cardsList'),
+        cardsListNext: document.getElementById('cardsListNext'),
         refreshBtn: document.getElementById('refreshBtn'),
         installAppBtn: document.getElementById('installAppBtn'),
         openConverterBtn: document.getElementById('openConverterBtn'),
@@ -1607,6 +1649,17 @@
         }
       };
       let suppressNextCardClick = false;
+      const cardsSwipeState = {
+        active: false,
+        dragging: false,
+        direction: null,
+        targetMode: null,
+        viewportWidth: 0,
+        baseOffset: 0,
+        currentOffset: 0,
+        deltaX: 0,
+        deltaY: 0
+      };
 
       init();
 
@@ -1817,7 +1870,7 @@
       }
 
       function installCardsSwipeModeSwitch() {
-        if (!refs.cardsList || typeof window.PointerEvent !== 'function') return;
+        if (!refs.cardsSwipeViewport || !refs.cardsSwipeTrack || !refs.cardsList || !refs.cardsListNext || typeof window.PointerEvent !== 'function') return;
 
         const SWIPE_THRESHOLD_X = 60;
         const HORIZONTAL_DOMINANCE_RATIO = 1.5;
@@ -1830,8 +1883,7 @@
           currentX: 0,
           currentY: 0,
           allowed: false,
-          horizontal: false,
-          switched: false
+          horizontal: false
         };
 
         const resetGesture = () => {
@@ -1842,7 +1894,86 @@
           gesture.currentY = 0;
           gesture.allowed = false;
           gesture.horizontal = false;
-          gesture.switched = false;
+        };
+
+        const cleanupSwipeTrack = () => {
+          cardsSwipeState.active = false;
+          cardsSwipeState.dragging = false;
+          cardsSwipeState.direction = null;
+          cardsSwipeState.targetMode = null;
+          cardsSwipeState.viewportWidth = 0;
+          cardsSwipeState.baseOffset = 0;
+          cardsSwipeState.currentOffset = 0;
+          cardsSwipeState.deltaX = 0;
+          cardsSwipeState.deltaY = 0;
+          refs.cardsSwipeTrack.classList.remove('dragging', 'animating', 'reverse');
+          refs.cardsSwipeTrack.style.transform = 'translateX(0px)';
+          refs.cardsListNext.innerHTML = '';
+          refs.cardsListNext.setAttribute('aria-hidden', 'true');
+        };
+
+        const initSwipeTrack = (direction, targetMode) => {
+          const width = refs.cardsSwipeViewport.clientWidth || refs.cardsSwipeViewport.getBoundingClientRect().width || 0;
+          if (!width) return false;
+          cardsSwipeState.active = true;
+          cardsSwipeState.dragging = true;
+          cardsSwipeState.direction = direction;
+          cardsSwipeState.targetMode = targetMode;
+          cardsSwipeState.viewportWidth = width;
+          cardsSwipeState.deltaX = 0;
+          cardsSwipeState.deltaY = 0;
+          refs.cardsListNext.innerHTML = renderCardsMarkupForMode(targetMode);
+          refs.cardsListNext.setAttribute('aria-hidden', 'false');
+          refs.cardsSwipeTrack.classList.remove('animating');
+          refs.cardsSwipeTrack.classList.add('dragging');
+          refs.cardsSwipeTrack.classList.toggle('reverse', direction === 'right');
+          cardsSwipeState.baseOffset = direction === 'right' ? -width : 0;
+          cardsSwipeState.currentOffset = cardsSwipeState.baseOffset;
+          refs.cardsSwipeTrack.style.transform = `translateX(${cardsSwipeState.baseOffset}px)`;
+          return true;
+        };
+
+        const updateSwipeTrackPosition = (deltaX) => {
+          if (!cardsSwipeState.active) return;
+          const width = cardsSwipeState.viewportWidth;
+          const minOffset = -width;
+          const maxOffset = 0;
+          const offset = clamp(cardsSwipeState.baseOffset + deltaX, minOffset, maxOffset);
+          cardsSwipeState.deltaX = deltaX;
+          cardsSwipeState.currentOffset = offset;
+          refs.cardsSwipeTrack.style.transform = `translateX(${offset}px)`;
+        };
+
+        const finalizeSwipeTrack = (shouldSwitch) => {
+          if (!cardsSwipeState.active) {
+            cleanupSwipeTrack();
+            return;
+          }
+          const width = cardsSwipeState.viewportWidth;
+          const direction = cardsSwipeState.direction;
+          const targetMode = cardsSwipeState.targetMode;
+          const targetOffset = direction === 'left'
+            ? (shouldSwitch ? -width : 0)
+            : (shouldSwitch ? 0 : -width);
+          refs.cardsSwipeTrack.classList.remove('dragging');
+          refs.cardsSwipeTrack.classList.add('animating');
+          refs.cardsSwipeTrack.style.transform = `translateX(${targetOffset}px)`;
+
+          const complete = () => {
+            refs.cardsSwipeTrack.removeEventListener('transitionend', complete);
+            cleanupSwipeTrack();
+            if (shouldSwitch && targetMode) {
+              suppressNextCardClick = true;
+              setViewMode(targetMode);
+            } else {
+              renderCards();
+            }
+          };
+          if (Math.abs(cardsSwipeState.currentOffset - targetOffset) < 0.5) {
+            complete();
+            return;
+          }
+          refs.cardsSwipeTrack.addEventListener('transitionend', complete, { once: true });
         };
 
         const shouldIgnoreStart = (target) => {
@@ -1866,7 +1997,7 @@
           return false;
         };
 
-        refs.cardsList.addEventListener('pointerdown', (event) => {
+        refs.cardsSwipeViewport.addEventListener('pointerdown', (event) => {
           if (event.pointerType === 'mouse' && event.button !== 0) return;
           gesture.pointerId = event.pointerId;
           gesture.startX = event.clientX;
@@ -1875,11 +2006,10 @@
           gesture.currentY = event.clientY;
           gesture.allowed = !shouldIgnoreStart(event.target);
           gesture.horizontal = false;
-          gesture.switched = false;
         }, { passive: true });
 
-        refs.cardsList.addEventListener('pointermove', (event) => {
-          if (event.pointerId !== gesture.pointerId || !gesture.allowed || gesture.switched) return;
+        refs.cardsSwipeViewport.addEventListener('pointermove', (event) => {
+          if (event.pointerId !== gesture.pointerId || !gesture.allowed) return;
 
           gesture.currentX = event.clientX;
           gesture.currentY = event.clientY;
@@ -1887,32 +2017,47 @@
           const deltaY = gesture.currentY - gesture.startY;
           const absX = Math.abs(deltaX);
           const absY = Math.abs(deltaY);
-          const isHorizontalSwipe = absX > SWIPE_THRESHOLD_X && absX > (absY * HORIZONTAL_DOMINANCE_RATIO);
+          const isHorizontalSwipe = absX > 10 && absX > (absY * HORIZONTAL_DOMINANCE_RATIO);
           if (!isHorizontalSwipe) return;
 
           gesture.horizontal = true;
-          if (deltaX < 0 && state.viewMode === 'currencies') {
-            setViewMode('metals');
-            suppressNextCardClick = true;
-            gesture.switched = true;
+          cardsSwipeState.deltaY = deltaY;
+          const direction = deltaX < 0 ? 'left' : 'right';
+          const targetMode = direction === 'left'
+            ? (state.viewMode === 'currencies' ? 'metals' : null)
+            : (state.viewMode === 'metals' ? 'currencies' : null);
+          if (!targetMode) return;
+
+          if (!cardsSwipeState.active) {
+            const started = initSwipeTrack(direction, targetMode);
+            if (!started) return;
+          }
+
+          if (cardsSwipeState.direction !== direction) {
             return;
           }
 
-          if (deltaX > 0 && state.viewMode === 'metals') {
-            setViewMode('currencies');
-            suppressNextCardClick = true;
-            gesture.switched = true;
-          }
+          updateSwipeTrackPosition(deltaX);
         }, { passive: true });
 
         const finalizeGesture = (event) => {
           if (event.pointerId !== gesture.pointerId) return;
+          const absX = Math.abs(gesture.currentX - gesture.startX);
+          const absY = Math.abs(gesture.currentY - gesture.startY);
+          const horizontalEnough = absX > SWIPE_THRESHOLD_X && absX > (absY * HORIZONTAL_DOMINANCE_RATIO);
+          const shouldSwitch = cardsSwipeState.active && horizontalEnough;
+          if (cardsSwipeState.active) {
+            finalizeSwipeTrack(shouldSwitch);
+          }
+          if (absX > 12 && absX > absY) {
+            suppressNextCardClick = true;
+          }
           resetGesture();
         };
 
-        refs.cardsList.addEventListener('pointerup', finalizeGesture, { passive: true });
-        refs.cardsList.addEventListener('pointercancel', finalizeGesture, { passive: true });
-        refs.cardsList.addEventListener('pointerleave', finalizeGesture, { passive: true });
+        refs.cardsSwipeViewport.addEventListener('pointerup', finalizeGesture, { passive: true });
+        refs.cardsSwipeViewport.addEventListener('pointercancel', finalizeGesture, { passive: true });
+        refs.cardsSwipeViewport.addEventListener('pointerleave', finalizeGesture, { passive: true });
       }
 
       async function updateInstallButtonVisibility() {
@@ -2400,6 +2545,15 @@
         renderCards();
       }
 
+      function getEmptyCardsMarkup(mode) {
+        return `
+          <article class="empty-card">
+            <h2>${mode === 'metals' ? 'Немає металів для показу' : 'Немає валют для показу'}</h2>
+            <p>${mode === 'metals' ? 'Спробуй оновити дані НБУ.' : 'Спробуй змінити базову валюту або оновити дані.'}</p>
+          </article>
+        `;
+      }
+
       function renderBaseChips() {
         const chips = [];
         const selectedNonQuick = state.baseCurrency && !QUICK_BASES.includes(state.baseCurrency) ? state.baseCurrency : null;
@@ -2429,13 +2583,26 @@
       }
 
       function renderCards() {
-        if (state.loading && !state.currentRates) {
-          refs.cardsList.innerHTML = renderSkeletonCards();
-          return;
+        const markup = renderCardsMarkupForMode(state.viewMode);
+        refs.cardsList.innerHTML = markup;
+        if (refs.cardsListNext) {
+          refs.cardsListNext.innerHTML = '';
+          refs.cardsListNext.setAttribute('aria-hidden', 'true');
         }
 
         if (state.error && !state.currentRates) {
-          refs.cardsList.innerHTML = `
+          const retry = refs.cardsList.querySelector('[data-card-retry]');
+          retry?.addEventListener('click', () => loadCurrentRates(true));
+        }
+      }
+
+      function renderCardsMarkupForMode(mode) {
+        if (state.loading && !state.currentRates) {
+          return renderSkeletonCards();
+        }
+
+        if (state.error && !state.currentRates) {
+          return `
             <article class="state-card" role="alert">
               <h2>Не вдалося завантажити курси</h2>
               <p>${escapeHtml(state.error)}</p>
@@ -2444,33 +2611,23 @@
               </div>
             </article>
           `;
-          const retry = refs.cardsList.querySelector('[data-card-retry]');
-          retry?.addEventListener('click', () => loadCurrentRates(true));
-          return;
         }
 
         if (!state.currentRates) {
-          refs.cardsList.innerHTML = `
+          return `
             <article class="empty-card">
               <h2>Немає даних</h2>
               <p>Поточні курси ще не доступні.</p>
             </article>
           `;
-          return;
         }
 
-        const cards = getDisplayCards();
+        const cards = getDisplayCards(mode);
         if (!cards.length) {
-          refs.cardsList.innerHTML = `
-            <article class="empty-card">
-              <h2>${state.viewMode === 'metals' ? 'Немає металів для показу' : 'Немає валют для показу'}</h2>
-              <p>${state.viewMode === 'metals' ? 'Спробуй оновити дані НБУ.' : 'Спробуй змінити базову валюту або оновити дані.'}</p>
-            </article>
-          `;
-          return;
+          return getEmptyCardsMarkup(mode);
         }
 
-        refs.cardsList.innerHTML = cards.map((row) => {
+        return cards.map((row) => {
           const rate = getCrossRate(row.cc, state.baseCurrency, state.currentRates);
           const change = getDailyChange(row.cc, state.baseCurrency);
           const deltaClass = change ? (change.absolute > 0 ? 'up' : change.absolute < 0 ? 'down' : '') : '';
@@ -2490,8 +2647,8 @@
               </div>
               <div class="card-bottom">
                 <div class="card-rate-block">
-                  <div class="card-rate">${formatRate(rate, state.viewMode === 'metals' ? 2 : 4)}</div>
-                  <div class="card-rate-caption">1 ${escapeHtml(row.cc)} = ${formatRate(rate, state.viewMode === 'metals' ? 2 : 4)} ${escapeHtml(state.baseCurrency)}</div>
+                  <div class="card-rate">${formatRate(rate, mode === 'metals' ? 2 : 4)}</div>
+                  <div class="card-rate-caption">1 ${escapeHtml(row.cc)} = ${formatRate(rate, mode === 'metals' ? 2 : 4)} ${escapeHtml(state.baseCurrency)}</div>
                 </div>
                 <div class="delta-stack">
                   <div class="delta-pill ${deltaClass}">${deltaText}</div>
@@ -3205,13 +3362,13 @@
         };
       }
 
-      function getDisplayCards() {
+      function getDisplayCards(mode = state.viewMode) {
         if (!state.currentRates) return [];
-        const codes = state.viewMode === 'metals' ? METAL_CODES : DISPLAY_CODES;
+        const codes = mode === 'metals' ? METAL_CODES : DISPLAY_CODES;
         return codes
           .map((code) => state.currentRates[code])
           .filter(Boolean)
-          .filter((row) => state.viewMode === 'metals' ? true : row.cc !== state.baseCurrency);
+          .filter((row) => mode === 'metals' ? true : row.cc !== state.baseCurrency);
       }
 
       function getAllCurrencyRows() {
