@@ -1661,6 +1661,7 @@
         viewportWidth: 0,
         baseOffset: 0,
         currentOffset: 0,
+        transitionTimer: null,
         deltaX: 0,
         deltaY: 0
       };
@@ -1901,6 +1902,10 @@
         };
 
         const cleanupSwipeTrack = () => {
+          if (cardsSwipeState.transitionTimer !== null) {
+            clearTimeout(cardsSwipeState.transitionTimer);
+            cardsSwipeState.transitionTimer = null;
+          }
           cardsSwipeState.active = false;
           cardsSwipeState.dragging = false;
           cardsSwipeState.direction = null;
@@ -1912,6 +1917,7 @@
           cardsSwipeState.deltaY = 0;
           refs.cardsSwipeTrack.classList.remove('dragging', 'animating', 'reverse');
           refs.cardsSwipeTrack.style.transform = 'translateX(0px)';
+          refs.cardsListNext.style.transform = '';
           refs.cardsListNext.innerHTML = '';
           refs.cardsListNext.setAttribute('aria-hidden', 'true');
         };
@@ -1920,6 +1926,10 @@
           const width = refs.cardsSwipeViewport.clientWidth || refs.cardsSwipeViewport.getBoundingClientRect().width || 0;
           if (!width) return false;
           saveCurrentViewScroll();
+          const scrollEl = getCardsScrollElement();
+          const currentTop = scrollEl ? scrollEl.scrollTop : 0;
+          const targetTop = state.scrollPositions[targetMode] || 0;
+          const compensationY = currentTop - targetTop;
           cardsSwipeState.active = true;
           cardsSwipeState.dragging = true;
           cardsSwipeState.direction = direction;
@@ -1929,6 +1939,7 @@
           cardsSwipeState.deltaY = 0;
           refs.cardsListNext.innerHTML = renderCardsMarkupForMode(targetMode);
           refs.cardsListNext.setAttribute('aria-hidden', 'false');
+          refs.cardsListNext.style.transform = compensationY ? `translateY(${compensationY}px)` : '';
           refs.cardsSwipeTrack.classList.remove('animating');
           refs.cardsSwipeTrack.classList.add('dragging');
           refs.cardsSwipeTrack.classList.toggle('reverse', direction === 'right');
@@ -1965,20 +1976,33 @@
           refs.cardsSwipeTrack.style.transform = `translateX(${targetOffset}px)`;
 
           const complete = () => {
-            refs.cardsSwipeTrack.removeEventListener('transitionend', complete);
-            cleanupSwipeTrack();
+            if (cardsSwipeState.transitionTimer !== null) {
+              clearTimeout(cardsSwipeState.transitionTimer);
+              cardsSwipeState.transitionTimer = null;
+            }
+            refs.cardsSwipeTrack.removeEventListener('transitionend', onTransitionEnd);
             if (shouldSwitch && targetMode) {
               suppressNextCardClick = true;
-              setViewMode(targetMode, { skipSaveCurrentScroll: true });
-            } else {
+              state.viewMode = targetMode;
+              writeLS(STORAGE_KEYS.viewMode, targetMode);
+              renderViewToggle();
               renderCards();
+              restoreViewScroll(targetMode);
+            } else {
+              refs.cardsListNext.style.transform = '';
             }
+            cleanupSwipeTrack();
+          };
+          const onTransitionEnd = (event) => {
+            if (event.target !== refs.cardsSwipeTrack || event.propertyName !== 'transform') return;
+            complete();
           };
           if (Math.abs(cardsSwipeState.currentOffset - targetOffset) < 0.5) {
             complete();
             return;
           }
-          refs.cardsSwipeTrack.addEventListener('transitionend', complete, { once: true });
+          refs.cardsSwipeTrack.addEventListener('transitionend', onTransitionEnd);
+          cardsSwipeState.transitionTimer = window.setTimeout(complete, 320);
         };
 
         const shouldIgnoreStart = (target) => {
@@ -2551,7 +2575,7 @@
         writeLS(STORAGE_KEYS.viewMode, mode);
         renderViewToggle();
         renderCards();
-        queueRestoreViewScroll(mode);
+        restoreViewScroll(mode);
       }
 
       function getCardsScrollElement() {
@@ -2569,12 +2593,6 @@
         if (!scrollEl) return;
         const savedTop = state.scrollPositions[mode] || 0;
         scrollEl.scrollTop = savedTop;
-      }
-
-      function queueRestoreViewScroll(mode) {
-        requestAnimationFrame(() => {
-          restoreViewScroll(mode);
-        });
       }
 
       function getEmptyCardsMarkup(mode) {
