@@ -1470,7 +1470,7 @@
           <button class="mode-btn active" type="button" data-view-mode="currencies" role="tab" aria-selected="true">Валюти</button>
           <button class="mode-btn" type="button" data-view-mode="metals" role="tab" aria-selected="false">Метали</button>
         </div>
-        <button class="converter-btn" id="openConverterBtn" type="button" aria-label="Відкрити конвертер" aria-pressed="false" title="Конвертер">Конвертер</button>
+        <button class="converter-btn" id="openConverterBtn" type="button" aria-label="Відкрити конвертер" aria-pressed="false" aria-expanded="false" title="Конвертер">Конвертер</button>
       </div>
     </header>
 
@@ -1656,6 +1656,8 @@
         chartActiveIndex: null,
         historyCache: new Map(),
         dayRatesCache: new Map(),
+        converterClosing: false,
+        converterCloseTimer: null,
         converter: {
           amount: normalizeConverterAmount(readLS(STORAGE_KEYS.converterAmount, '')),
           from: readLS(STORAGE_KEYS.converterFrom, 'USD'),
@@ -1705,7 +1707,13 @@
       function bindStaticEvents() {
         refs.refreshBtn.addEventListener('click', () => loadCurrentRates(true));
         refs.installAppBtn.addEventListener('click', onInstallButtonClick);
-        refs.openConverterBtn.addEventListener('click', () => openConverterSheet());
+        refs.openConverterBtn.addEventListener('click', () => {
+          if (state.activeOverlay === 'converter' || state.converterClosing) {
+            closeConverterSheet();
+            return;
+          }
+          openConverterSheet();
+        });
         installCardsSwipeModeSwitch();
         refs.viewModeToggle.addEventListener('click', (event) => {
           const btn = event.target.closest('[data-view-mode]');
@@ -1733,6 +1741,7 @@
         refs.baseOptions.addEventListener('click', (event) => {
           const row = event.target.closest('[data-base-code]');
           if (!row) return;
+          clearActiveInputFocus();
           setBaseCurrency(row.dataset.baseCode);
           closeBaseSheet();
         });
@@ -1741,6 +1750,7 @@
           const chip = event.target.closest('[data-chip-action]');
           if (!chip) return;
           const code = chip.dataset.code;
+          clearActiveInputFocus();
           if (code) setBaseCurrency(code);
         });
         refs.baseMoreBtn.addEventListener('click', () => {
@@ -1782,6 +1792,7 @@
 
           const convertBtn = event.target.closest('[data-detail-convert]');
           if (convertBtn && state.detailCurrency) {
+            clearActiveInputFocus();
             state.converter.from = state.detailCurrency;
             state.converter.to = state.baseCurrency;
             persistConverterPrefs();
@@ -2001,6 +2012,7 @@
           const targetOffset = translateFor(targetIndex, width, 0);
 
           if (shouldSwitch && targetMode !== state.viewMode) {
+            prepareForModeChange('tab-switch', { closeConverterImmediate: true });
             saveCurrentViewScroll();
             state.viewMode = targetMode;
             writeLS(STORAGE_KEYS.viewMode, targetMode);
@@ -2474,6 +2486,7 @@
 
       function setBaseCurrency(code) {
         if (!state.currentRates || !code || code === state.baseCurrency) return;
+        prepareForModeChange('base-currency-change', { keepBaseSheet: true, closeConverterImmediate: true });
         state.baseCurrency = code;
         writeLS(STORAGE_KEYS.base, code);
         renderBaseChips();
@@ -2488,6 +2501,7 @@
 
       function openBaseSheet() {
         if (!state.currentRates) return;
+        prepareForModeChange('open-base-sheet', { keepBaseSheet: true, closeConverterImmediate: true });
         closeAllOverlays('base');
         state.baseSearch = '';
         refs.baseSearch.value = '';
@@ -2505,6 +2519,7 @@
 
       function openDetailSheet(code) {
         if (!state.currentRates || !code) return;
+        prepareForModeChange('open-detail-sheet', { keepDetailSheet: true, closeConverterImmediate: true });
         closeAllOverlays('detail');
         state.detailCurrency = code;
         state.detailPeriod = state.detailPeriod || '1M';
@@ -2528,6 +2543,8 @@
 
       function openConverterSheet(fromDetail = false) {
         if (!state.currentRates) return;
+        prepareForModeChange('open-converter', { keepConverter: true, closeConverterImmediate: true });
+        cancelConverterClosingState();
         closeAllOverlays('converter');
         state.converter.pickerTarget = null;
         state.converter.search = '';
@@ -2544,14 +2561,54 @@
       }
 
       function closeConverterSheet() {
-        if (state.activeOverlay !== 'converter') return;
+        if (state.activeOverlay !== 'converter' && !state.converterClosing) return;
+        beginConverterClose();
+      }
+
+      function beginConverterClose({ immediate = false } = {}) {
+        clearActiveInputFocus({ includeConverterContainer: true });
         state.activeOverlay = null;
         state.converter.pickerTarget = null;
         state.converter.search = '';
+
+        if (immediate) {
+          cancelConverterClosingState();
+          syncOverlayState();
+          return;
+        }
+
+        state.converterClosing = true;
         syncOverlayState();
+
+        const completeClose = () => {
+          cancelConverterClosingState();
+          syncOverlayState();
+        };
+        const onTransitionEnd = (event) => {
+          if (event.target !== refs.converterSheet || event.propertyName !== 'transform') return;
+          refs.converterSheet.removeEventListener('transitionend', onTransitionEnd);
+          completeClose();
+        };
+
+        refs.converterSheet.addEventListener('transitionend', onTransitionEnd);
+        state.converterCloseTimer = window.setTimeout(() => {
+          refs.converterSheet.removeEventListener('transitionend', onTransitionEnd);
+          completeClose();
+        }, 320);
+      }
+
+      function cancelConverterClosingState() {
+        if (state.converterCloseTimer !== null) {
+          clearTimeout(state.converterCloseTimer);
+          state.converterCloseTimer = null;
+        }
+        state.converterClosing = false;
       }
 
       function closeAllOverlays(except = null) {
+        if (except !== 'converter' && (state.activeOverlay === 'converter' || state.converterClosing)) {
+          beginConverterClose({ immediate: true });
+        }
         if (except !== 'base') refs.baseSheet.style.transform = '';
         if (except !== 'detail') refs.detailSheet.style.transform = '';
         if (except !== 'converter') refs.converterSheet.style.transform = '';
@@ -2570,13 +2627,14 @@
         };
 
         Object.entries(map).forEach(([key, overlay]) => {
-          const open = state.activeOverlay === key;
+          const open = state.activeOverlay === key || (key === 'converter' && state.converterClosing);
           overlay.classList.toggle('open', open);
           overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
         });
         const isConverterOpen = state.activeOverlay === 'converter';
         refs.openConverterBtn.classList.toggle('active', isConverterOpen);
         refs.openConverterBtn.setAttribute('aria-pressed', isConverterOpen ? 'true' : 'false');
+        refs.openConverterBtn.setAttribute('aria-expanded', isConverterOpen ? 'true' : 'false');
         renderBaseChips();
       }
 
@@ -2605,6 +2663,7 @@
 
       function setViewMode(mode, options = {}) {
         if (!['currencies', 'metals'].includes(mode) || mode === state.viewMode) return;
+        prepareForModeChange('tab-switch', { closeConverterImmediate: true });
         if (!options.skipSaveCurrentScroll) {
           saveCurrentViewScroll();
         }
@@ -3703,7 +3762,7 @@
       function focusAmountInputSoon() {
         setTimeout(() => {
           const input = document.getElementById('converterAmountInput');
-          if (!input || state.activeOverlay !== 'converter' || state.converter.pickerTarget) return;
+          if (!input || state.activeOverlay !== 'converter' || state.converter.pickerTarget || state.converterClosing) return;
           input.focus({ preventScroll: true });
           try { input.setSelectionRange(input.value.length, input.value.length); } catch {}
         }, 260);
@@ -3712,9 +3771,34 @@
       function focusConverterSearchSoon() {
         setTimeout(() => {
           const input = document.getElementById('converterSearch');
-          if (!input || state.activeOverlay !== 'converter' || !state.converter.pickerTarget) return;
+          if (!input || state.activeOverlay !== 'converter' || !state.converter.pickerTarget || state.converterClosing) return;
           input.focus({ preventScroll: true });
         }, 60);
+      }
+
+      function clearActiveInputFocus({ includeConverterContainer = false } = {}) {
+        const active = document.activeElement;
+        if (!active || !(active instanceof HTMLElement)) return;
+
+        const isEditable = ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName) || active.isContentEditable;
+        const isInsideConverter = includeConverterContainer && refs.converterSheet?.contains(active);
+        if ((isEditable || isInsideConverter) && typeof active.blur === 'function') {
+          active.blur();
+        }
+      }
+
+      function prepareForModeChange(_nextMode, options = {}) {
+        clearActiveInputFocus({ includeConverterContainer: true });
+
+        if (!options.keepConverter && (state.activeOverlay === 'converter' || state.converterClosing)) {
+          beginConverterClose({ immediate: options.closeConverterImmediate !== false });
+        }
+        if (!options.keepDetailSheet && state.activeOverlay === 'detail') {
+          closeDetailSheet();
+        }
+        if (!options.keepBaseSheet && state.activeOverlay === 'base') {
+          closeBaseSheet();
+        }
       }
 
       function parseInputNumber(value) {
