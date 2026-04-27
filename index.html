@@ -395,39 +395,34 @@
     .content-area {
       flex: 1 1 auto;
       min-height: 0;
-      overflow: auto;
-      overscroll-behavior-y: contain;
+      overflow: hidden;
       padding: 16px 18px calc(var(--bottom-safe) + 18px);
-      scrollbar-width: none;
-    }
-
-    .content-area::-webkit-scrollbar {
-      display: none;
     }
 
     .cards-list {
       display: grid;
       gap: var(--card-gap);
-      min-height: 100%;
       align-content: start;
+      width: 100%;
+      min-width: 0;
       touch-action: pan-y;
     }
 
     .cards-swipe-viewport {
       width: 100%;
+      height: 100%;
       overflow: hidden;
+      position: relative;
       touch-action: pan-y;
+      contain: layout paint;
     }
 
     .cards-swipe-track {
       display: flex;
-      width: 200%;
+      width: 100%;
+      height: 100%;
       will-change: transform;
-      transform: translateX(0);
-    }
-
-    .cards-swipe-track.reverse {
-      flex-direction: row-reverse;
+      transform: translate3d(0, 0, 0);
     }
 
     .cards-swipe-track.dragging {
@@ -439,8 +434,26 @@
     }
 
     .cards-panel {
-      width: 50%;
-      flex: 0 0 50%;
+      flex: 0 0 100%;
+      width: 100%;
+      min-width: 0;
+      height: 100%;
+      overflow: hidden;
+      contain: layout paint;
+      position: relative;
+    }
+
+    .cards-panel-scroll {
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+    }
+
+    .cards-panel-scroll::-webkit-scrollbar {
+      display: none;
     }
 
     .currency-card {
@@ -1470,14 +1483,18 @@
       </div>
     </section>
 
-    <main class="content-area" id="mainScrollArea">
+    <main class="content-area">
       <div class="cards-swipe-viewport" id="cardsSwipeViewport">
         <div class="cards-swipe-track" id="cardsSwipeTrack">
-          <section class="cards-panel cards-panel-current" aria-label="Поточний режим">
-            <section class="cards-list" id="cardsList"></section>
+          <section class="cards-panel" data-mode="currencies" aria-label="Валюти">
+            <div class="cards-panel-scroll" id="cardsScrollCurrencies" data-scroll-mode="currencies">
+              <section class="cards-list" id="cardsListCurrencies"></section>
+            </div>
           </section>
-          <section class="cards-panel cards-panel-next" aria-label="Наступний режим">
-            <section class="cards-list" id="cardsListNext" aria-hidden="true"></section>
+          <section class="cards-panel" data-mode="metals" aria-label="Метали">
+            <div class="cards-panel-scroll" id="cardsScrollMetals" data-scroll-mode="metals">
+              <section class="cards-list" id="cardsListMetals"></section>
+            </div>
           </section>
         </div>
       </div>
@@ -1588,8 +1605,10 @@
         baseMoreBtn: document.getElementById('baseMoreBtn'),
         cardsSwipeViewport: document.getElementById('cardsSwipeViewport'),
         cardsSwipeTrack: document.getElementById('cardsSwipeTrack'),
-        cardsList: document.getElementById('cardsList'),
-        cardsListNext: document.getElementById('cardsListNext'),
+        cardsListCurrencies: document.getElementById('cardsListCurrencies'),
+        cardsListMetals: document.getElementById('cardsListMetals'),
+        cardsScrollCurrencies: document.getElementById('cardsScrollCurrencies'),
+        cardsScrollMetals: document.getElementById('cardsScrollMetals'),
         refreshBtn: document.getElementById('refreshBtn'),
         installAppBtn: document.getElementById('installAppBtn'),
         openConverterBtn: document.getElementById('openConverterBtn'),
@@ -1609,8 +1628,7 @@
         converterSheet: document.getElementById('converterSheet'),
         closeConverterSheet: document.getElementById('closeConverterSheet'),
         converterBody: document.getElementById('converterBody'),
-        converterSheetSubtitle: document.getElementById('converterSheetSubtitle'),
-        mainScrollArea: document.getElementById('mainScrollArea')
+        converterSheetSubtitle: document.getElementById('converterSheetSubtitle')
       };
 
       const state = {
@@ -1676,6 +1694,7 @@
         renderViewToggle();
         renderBaseChips();
         renderCards();
+        restoreViewScroll(state.viewMode);
         renderBaseSheet();
         renderDetailBody();
         renderConverterBody();
@@ -1732,7 +1751,7 @@
           openBaseSheet();
         });
 
-        refs.cardsList.addEventListener('click', (event) => {
+        refs.cardsSwipeTrack.addEventListener('click', (event) => {
           if (suppressNextCardClick) {
             event.preventDefault();
             event.stopPropagation();
@@ -1844,6 +1863,11 @@
 
         window.addEventListener('pageshow', () => {
           void updateInstallButtonVisibility();
+          updateCardsTrackPosition(false);
+        });
+
+        window.addEventListener('resize', () => {
+          updateCardsTrackPosition(false);
         });
 
         document.addEventListener('visibilitychange', () => {
@@ -1875,9 +1899,11 @@
       }
 
       function installCardsSwipeModeSwitch() {
-        if (!refs.cardsSwipeViewport || !refs.cardsSwipeTrack || !refs.cardsList || !refs.cardsListNext || typeof window.PointerEvent !== 'function') return;
+        if (!refs.cardsSwipeViewport || !refs.cardsSwipeTrack || typeof window.PointerEvent !== 'function') return;
 
-        const SWIPE_THRESHOLD_X = 60;
+        const SWIPE_START_X = 10;
+        const SWIPE_THRESHOLD_RATIO = 0.25;
+        const SWIPE_VELOCITY_THRESHOLD = 0.45;
         const HORIZONTAL_DOMINANCE_RATIO = 1.5;
         const CHART_SELECTOR = ['.chart-card', '.chart-area', '.chart-svg', '.chart-hit', 'canvas', 'svg.chart-svg'].join(',');
 
@@ -1887,6 +1913,9 @@
           startY: 0,
           currentX: 0,
           currentY: 0,
+          lastX: 0,
+          lastTs: 0,
+          velocityX: 0,
           allowed: false,
           horizontal: false
         };
@@ -1897,6 +1926,9 @@
           gesture.startY = 0;
           gesture.currentX = 0;
           gesture.currentY = 0;
+          gesture.lastX = 0;
+          gesture.lastTs = 0;
+          gesture.velocityX = 0;
           gesture.allowed = false;
           gesture.horizontal = false;
         };
@@ -1915,37 +1947,35 @@
           cardsSwipeState.currentOffset = 0;
           cardsSwipeState.deltaX = 0;
           cardsSwipeState.deltaY = 0;
-          refs.cardsSwipeTrack.classList.remove('dragging', 'animating', 'reverse');
-          refs.cardsSwipeTrack.style.transform = 'translateX(0px)';
-          refs.cardsListNext.style.transform = '';
-          refs.cardsListNext.innerHTML = '';
-          refs.cardsListNext.setAttribute('aria-hidden', 'true');
+          refs.cardsSwipeTrack.classList.remove('dragging', 'animating');
         };
 
-        const initSwipeTrack = (direction, targetMode) => {
+        const indexForMode = (mode) => (mode === 'metals' ? 1 : 0);
+        const modeForIndex = (index) => (index === 1 ? 'metals' : 'currencies');
+        const translateFor = (index, width, dragPx = 0) => (-index * width) + dragPx;
+
+        const applyTrackTransform = (offsetPx) => {
+          refs.cardsSwipeTrack.style.transform = `translate3d(${offsetPx}px, 0, 0)`;
+        };
+
+        const initSwipeTrack = (direction) => {
           const width = refs.cardsSwipeViewport.clientWidth || refs.cardsSwipeViewport.getBoundingClientRect().width || 0;
           if (!width) return false;
-          saveCurrentViewScroll();
-          const scrollEl = getCardsScrollElement();
-          const currentTop = scrollEl ? scrollEl.scrollTop : 0;
-          const targetTop = state.scrollPositions[targetMode] || 0;
-          const compensationY = currentTop - targetTop;
+          const activeIndex = indexForMode(state.viewMode);
+          const targetIndex = direction === 'left' ? activeIndex + 1 : activeIndex - 1;
+          if (targetIndex < 0 || targetIndex > 1) return false;
           cardsSwipeState.active = true;
           cardsSwipeState.dragging = true;
           cardsSwipeState.direction = direction;
-          cardsSwipeState.targetMode = targetMode;
+          cardsSwipeState.targetMode = modeForIndex(targetIndex);
           cardsSwipeState.viewportWidth = width;
+          cardsSwipeState.baseOffset = translateFor(activeIndex, width, 0);
+          cardsSwipeState.currentOffset = cardsSwipeState.baseOffset;
           cardsSwipeState.deltaX = 0;
           cardsSwipeState.deltaY = 0;
-          refs.cardsListNext.innerHTML = renderCardsMarkupForMode(targetMode);
-          refs.cardsListNext.setAttribute('aria-hidden', 'false');
-          refs.cardsListNext.style.transform = compensationY ? `translateY(${compensationY}px)` : '';
           refs.cardsSwipeTrack.classList.remove('animating');
           refs.cardsSwipeTrack.classList.add('dragging');
-          refs.cardsSwipeTrack.classList.toggle('reverse', direction === 'right');
-          cardsSwipeState.baseOffset = direction === 'right' ? -width : 0;
-          cardsSwipeState.currentOffset = cardsSwipeState.baseOffset;
-          refs.cardsSwipeTrack.style.transform = `translateX(${cardsSwipeState.baseOffset}px)`;
+          applyTrackTransform(cardsSwipeState.baseOffset);
           return true;
         };
 
@@ -1957,7 +1987,7 @@
           const offset = clamp(cardsSwipeState.baseOffset + deltaX, minOffset, maxOffset);
           cardsSwipeState.deltaX = deltaX;
           cardsSwipeState.currentOffset = offset;
-          refs.cardsSwipeTrack.style.transform = `translateX(${offset}px)`;
+          applyTrackTransform(offset);
         };
 
         const finalizeSwipeTrack = (shouldSwitch) => {
@@ -1966,14 +1996,21 @@
             return;
           }
           const width = cardsSwipeState.viewportWidth;
-          const direction = cardsSwipeState.direction;
-          const targetMode = cardsSwipeState.targetMode;
-          const targetOffset = direction === 'left'
-            ? (shouldSwitch ? -width : 0)
-            : (shouldSwitch ? 0 : -width);
+          const targetMode = shouldSwitch ? cardsSwipeState.targetMode : state.viewMode;
+          const targetIndex = indexForMode(targetMode);
+          const targetOffset = translateFor(targetIndex, width, 0);
+
+          if (shouldSwitch && targetMode !== state.viewMode) {
+            saveCurrentViewScroll();
+            state.viewMode = targetMode;
+            writeLS(STORAGE_KEYS.viewMode, targetMode);
+            renderViewToggle();
+            restoreViewScroll(targetMode);
+          }
+
           refs.cardsSwipeTrack.classList.remove('dragging');
           refs.cardsSwipeTrack.classList.add('animating');
-          refs.cardsSwipeTrack.style.transform = `translateX(${targetOffset}px)`;
+          applyTrackTransform(targetOffset);
 
           const complete = () => {
             if (cardsSwipeState.transitionTimer !== null) {
@@ -1981,17 +2018,9 @@
               cardsSwipeState.transitionTimer = null;
             }
             refs.cardsSwipeTrack.removeEventListener('transitionend', onTransitionEnd);
-            if (shouldSwitch && targetMode) {
-              suppressNextCardClick = true;
-              state.viewMode = targetMode;
-              writeLS(STORAGE_KEYS.viewMode, targetMode);
-              renderViewToggle();
-              renderCards();
-              restoreViewScroll(targetMode);
-            } else {
-              refs.cardsListNext.style.transform = '';
-            }
+            if (shouldSwitch && targetMode) suppressNextCardClick = true;
             cleanupSwipeTrack();
+            updateCardsTrackPosition();
           };
           const onTransitionEnd = (event) => {
             if (event.target !== refs.cardsSwipeTrack || event.propertyName !== 'transform') return;
@@ -2033,6 +2062,9 @@
           gesture.startY = event.clientY;
           gesture.currentX = event.clientX;
           gesture.currentY = event.clientY;
+          gesture.lastX = event.clientX;
+          gesture.lastTs = event.timeStamp;
+          gesture.velocityX = 0;
           gesture.allowed = !shouldIgnoreStart(event.target);
           gesture.horizontal = false;
         }, { passive: true });
@@ -2042,23 +2074,25 @@
 
           gesture.currentX = event.clientX;
           gesture.currentY = event.clientY;
+          if (gesture.lastTs) {
+            const dt = Math.max(1, event.timeStamp - gesture.lastTs);
+            gesture.velocityX = (event.clientX - gesture.lastX) / dt;
+          }
+          gesture.lastX = event.clientX;
+          gesture.lastTs = event.timeStamp;
           const deltaX = gesture.currentX - gesture.startX;
           const deltaY = gesture.currentY - gesture.startY;
           const absX = Math.abs(deltaX);
           const absY = Math.abs(deltaY);
-          const isHorizontalSwipe = absX > 10 && absX > (absY * HORIZONTAL_DOMINANCE_RATIO);
+          const isHorizontalSwipe = absX > SWIPE_START_X && absX > (absY * HORIZONTAL_DOMINANCE_RATIO);
           if (!isHorizontalSwipe) return;
 
           gesture.horizontal = true;
           cardsSwipeState.deltaY = deltaY;
           const direction = deltaX < 0 ? 'left' : 'right';
-          const targetMode = direction === 'left'
-            ? (state.viewMode === 'currencies' ? 'metals' : null)
-            : (state.viewMode === 'metals' ? 'currencies' : null);
-          if (!targetMode) return;
 
           if (!cardsSwipeState.active) {
-            const started = initSwipeTrack(direction, targetMode);
+            const started = initSwipeTrack(direction);
             if (!started) return;
           }
 
@@ -2073,8 +2107,11 @@
           if (event.pointerId !== gesture.pointerId) return;
           const absX = Math.abs(gesture.currentX - gesture.startX);
           const absY = Math.abs(gesture.currentY - gesture.startY);
-          const horizontalEnough = absX > SWIPE_THRESHOLD_X && absX > (absY * HORIZONTAL_DOMINANCE_RATIO);
-          const shouldSwitch = cardsSwipeState.active && horizontalEnough;
+          const width = cardsSwipeState.viewportWidth || refs.cardsSwipeViewport.clientWidth || 1;
+          const distanceEnough = absX > (width * SWIPE_THRESHOLD_RATIO);
+          const velocityEnough = Math.abs(gesture.velocityX) > SWIPE_VELOCITY_THRESHOLD;
+          const horizontalEnough = absX > SWIPE_START_X && absX > (absY * HORIZONTAL_DOMINANCE_RATIO);
+          const shouldSwitch = cardsSwipeState.active && horizontalEnough && (distanceEnough || velocityEnough);
           if (cardsSwipeState.active) {
             finalizeSwipeTrack(shouldSwitch);
           }
@@ -2574,22 +2611,23 @@
         state.viewMode = mode;
         writeLS(STORAGE_KEYS.viewMode, mode);
         renderViewToggle();
-        renderCards();
         restoreViewScroll(mode);
+        updateCardsTrackPosition(options.animate !== false);
       }
 
-      function getCardsScrollElement() {
-        return refs.mainScrollArea || refs.cardsList || null;
+      function getCardsScrollElement(mode = state.viewMode) {
+        if (mode === 'metals') return refs.cardsScrollMetals || null;
+        return refs.cardsScrollCurrencies || null;
       }
 
       function saveCurrentViewScroll() {
-        const scrollEl = getCardsScrollElement();
+        const scrollEl = getCardsScrollElement(state.viewMode);
         if (!scrollEl) return;
         state.scrollPositions[state.viewMode] = scrollEl.scrollTop;
       }
 
       function restoreViewScroll(mode) {
-        const scrollEl = getCardsScrollElement();
+        const scrollEl = getCardsScrollElement(mode);
         if (!scrollEl) return;
         const savedTop = state.scrollPositions[mode] || 0;
         scrollEl.scrollTop = savedTop;
@@ -2633,17 +2671,30 @@
       }
 
       function renderCards() {
-        const markup = renderCardsMarkupForMode(state.viewMode);
-        refs.cardsList.innerHTML = markup;
-        if (refs.cardsListNext) {
-          refs.cardsListNext.innerHTML = '';
-          refs.cardsListNext.setAttribute('aria-hidden', 'true');
-        }
+        refs.cardsListCurrencies.innerHTML = renderCardsMarkupForMode('currencies');
+        refs.cardsListMetals.innerHTML = renderCardsMarkupForMode('metals');
+        updateCardsTrackPosition(false);
 
         if (state.error && !state.currentRates) {
-          const retry = refs.cardsList.querySelector('[data-card-retry]');
-          retry?.addEventListener('click', () => loadCurrentRates(true));
+          refs.cardsSwipeTrack.querySelectorAll('[data-card-retry]').forEach((retry) => {
+            retry.addEventListener('click', () => loadCurrentRates(true));
+          });
         }
+      }
+
+      function updateCardsTrackPosition(animate = false) {
+        if (!refs.cardsSwipeTrack || !refs.cardsSwipeViewport) return;
+        if (cardsSwipeState.active) return;
+        const width = refs.cardsSwipeViewport.clientWidth || refs.cardsSwipeViewport.getBoundingClientRect().width || 0;
+        if (!width) return;
+        const index = state.viewMode === 'metals' ? 1 : 0;
+        if (animate) {
+          refs.cardsSwipeTrack.classList.add('animating');
+          refs.cardsSwipeTrack.classList.remove('dragging');
+        } else {
+          refs.cardsSwipeTrack.classList.remove('animating', 'dragging');
+        }
+        refs.cardsSwipeTrack.style.transform = `translate3d(${-index * width}px, 0, 0)`;
       }
 
       function renderCardsMarkupForMode(mode) {
